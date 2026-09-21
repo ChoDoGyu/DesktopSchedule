@@ -40,7 +40,15 @@ public class WeeklySpanningScheduleViewModel
     public int RowIndex { get; }
 
     /// <summary>
+    /// 일정이 완료 상태인지 여부입니다.
+    /// 완료된 연결 일정의 화면 스타일을 구분할 때 사용합니다.
+    /// </summary>
+    public bool IsCompleted => Schedule.IsCompleted;
+
+    /// <summary>
     /// Canvas에서 일정 막대가 시작할 X 위치입니다.
+    /// 현재 구조에서는 140px 고정 열을 사용하며,
+    /// 이 부분은 이후 공통 레이아웃 리팩터링에서 제거할 예정입니다.
     /// </summary>
     public double Left => StartDayIndex * DayColumnWidth + HorizontalMargin;
 
@@ -60,7 +68,7 @@ public class WeeklySpanningScheduleViewModel
     public double Height => ScheduleHeight;
 
     /// <summary>
-    /// 화면에 표시할 문자열입니다.
+    /// 연결 일정 막대 안에 표시할 문자열입니다.
     /// </summary>
     public string DisplayText
     {

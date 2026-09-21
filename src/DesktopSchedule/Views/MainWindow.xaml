@@ -8,7 +8,7 @@
         mc:Ignorable="d"
         Title="{Binding Title}"
         Width="1120"
-        Height="1000"
+        Height="960"
         MinWidth="900"
         MinHeight="800"
         ResizeMode="CanResize"

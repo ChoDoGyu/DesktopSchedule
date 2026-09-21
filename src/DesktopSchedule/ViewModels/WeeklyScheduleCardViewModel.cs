@@ -4,19 +4,20 @@ namespace DesktopSchedule.ViewModels;
 
 /// <summary>
 /// 주간 7일 화면의 특정 날짜에 표시할 일정 카드 정보를 제공합니다.
-/// 여러 날짜 일정은 날짜마다 하나의 표시 카드가 만들어질 수 있지만,
-/// 실제 일정 데이터는 모두 같은 ScheduleItem을 참조합니다.
+/// 실제 일정 데이터는 ScheduleItem을 그대로 참조하고,
+/// 화면에 필요한 표시 문자열과 상태만 제공합니다.
 /// </summary>
 public class WeeklyScheduleCardViewModel
 {
     /// <summary>
     /// 실제 일정 데이터입니다.
+    /// 수정, 삭제, 완료 처리와 Drag 이동에서 사용합니다.
     /// </summary>
     public ScheduleItem Schedule { get; }
 
     /// <summary>
     /// 현재 카드가 표시되는 날짜입니다.
-    /// 여러 날짜 일정의 Drag 이동 기준으로도 사용합니다.
+    /// Drag 이동 시 사용자가 잡은 날짜를 계산하는 기준으로도 사용합니다.
     /// </summary>
     public DateTime DisplayDate { get; }
 
@@ -31,12 +32,18 @@ public class WeeklyScheduleCardViewModel
     public bool IsAllDay => Schedule.IsAllDay;
 
     /// <summary>
-    /// 두 날짜 이상에 걸쳐 있는 일정인지 여부입니다.
+    /// 일정이 완료 상태인지 여부입니다.
+    /// 완료 일정 표시 시 카드 스타일을 구분하는 데 사용합니다.
+    /// </summary>
+    public bool IsCompleted => Schedule.IsCompleted;
+
+    /// <summary>
+    /// 실제 시작일과 종료일이 서로 다른 날짜인지 여부입니다.
     /// </summary>
     public bool IsMultiDay => Schedule.StartAt.Date != Schedule.EndAt.Date;
 
     /// <summary>
-    /// 카드 앞부분에 표시할 시간 또는 일정 상태입니다.
+    /// 카드 앞부분에 표시할 시간 또는 일정 상태 문자열입니다.
     /// </summary>
     public string TimeText
     {
