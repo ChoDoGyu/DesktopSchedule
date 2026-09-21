@@ -36,6 +36,28 @@ public class ScheduleItem
     public bool IsAllDay { get; set; }
 
     /// <summary>
+    /// 일정이 완료되었는지 여부입니다.
+    /// </summary>
+    public bool IsCompleted { get; set; }
+
+    /// <summary>
+    /// 일정이 완료된 날짜와 시간입니다.
+    /// 완료되지 않은 일정이면 null입니다.
+    /// </summary>
+    public DateTime? CompletedAt { get; set; }
+
+    /// <summary>
+    /// 이 일정에서 알림 기능을 사용할지 여부입니다.
+    /// </summary>
+    public bool IsReminderEnabled { get; set; }
+
+    /// <summary>
+    /// 일정 시작 몇 분 전에 알림을 발생시킬지 나타냅니다.
+    /// 0이면 일정 시작 시간에 알림을 발생시킵니다.
+    /// </summary>
+    public int ReminderMinutesBefore { get; set; }
+
+    /// <summary>
     /// 일정이 처음 생성된 날짜와 시간입니다.
     /// </summary>
     public DateTime CreatedAt { get; set; } = DateTime.Now;

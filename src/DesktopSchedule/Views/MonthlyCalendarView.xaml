@@ -4,13 +4,307 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
-             d:DesignHeight="450"
-             d:DesignWidth="800">
+             d:DesignHeight="600"
+             d:DesignWidth="420">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    </UserControl.Resources>
 
     <Grid>
-        <TextBlock Text="월간 달력"
-                   HorizontalAlignment="Center"
-                   VerticalAlignment="Center"
-                   FontSize="32" />
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0"
+              Margin="0,0,0,12">
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <CheckBox Grid.Column="0"
+                      Content="완료 일정 보기"
+                      IsChecked="{Binding ShowCompletedSchedules}"
+                      VerticalAlignment="Center" />
+
+            <Button Grid.Column="1"
+                    Content="새 일정"
+                    Command="{Binding OpenNewScheduleCommand}"
+                    Padding="12,6" />
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <Grid>
+                <Grid.Style>
+                    <Style TargetType="Grid">
+                        <Setter Property="Visibility"
+                                Value="Visible" />
+
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsEditorOpen}"
+                                         Value="True">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Grid.Style>
+
+                <ListBox ItemsSource="{Binding Schedules}"
+                         HorizontalContentAlignment="Stretch"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Button Command="{Binding DataContext.SelectScheduleCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    CommandParameter="{Binding}"
+                                    HorizontalContentAlignment="Stretch"
+                                    Padding="0"
+                                    Margin="0,0,0,8">
+
+                                <Border BorderBrush="LightGray"
+                                        BorderThickness="1"
+                                        CornerRadius="6"
+                                        Padding="10">
+
+                                    <StackPanel>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBlock Grid.Column="0"
+                                                       Text="{Binding Title}"
+                                                       FontSize="16"
+                                                       FontWeight="SemiBold"
+                                                       TextWrapping="Wrap" />
+
+                                            <TextBlock Grid.Column="1"
+                                                       Text="완료"
+                                                       Margin="8,0,0,0"
+                                                       VerticalAlignment="Center">
+
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Visibility"
+                                                                Value="Collapsed" />
+
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsCompleted}"
+                                                                         Value="True">
+                                                                <Setter Property="Visibility"
+                                                                        Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </Grid>
+
+                                        <TextBlock Text="{Binding Description}"
+                                                   Margin="0,4,0,8"
+                                                   TextWrapping="Wrap" />
+
+                                        <TextBlock Text="{Binding StartAt, StringFormat=시작: {0:yyyy-MM-dd HH:mm}}" />
+
+                                        <TextBlock Text="{Binding EndAt, StringFormat=종료: {0:yyyy-MM-dd HH:mm}}"
+                                                   Margin="0,2,0,0" />
+                                    </StackPanel>
+                                </Border>
+                            </Button>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+
+            <Border BorderBrush="LightGray"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Padding="12"
+                    Visibility="{Binding IsEditorOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
+
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+
+                    <StackPanel>
+                        <TextBlock Text="{Binding EditorTitle}"
+                                   FontSize="20"
+                                   FontWeight="SemiBold"
+                                   Margin="0,0,0,12" />
+
+                        <TextBlock Text="제목"
+                                   Margin="0,0,0,4" />
+
+                        <TextBox Text="{Binding NewTitle, UpdateSourceTrigger=PropertyChanged}"
+                                 Padding="6"
+                                 Margin="0,0,0,10" />
+
+                        <TextBlock Text="설명"
+                                   Margin="0,0,0,4" />
+
+                        <TextBox Text="{Binding NewDescription, UpdateSourceTrigger=PropertyChanged}"
+                                 Height="70"
+                                 AcceptsReturn="True"
+                                 TextWrapping="Wrap"
+                                 VerticalScrollBarVisibility="Auto"
+                                 Padding="6"
+                                 Margin="0,0,0,10" />
+
+                        <TextBlock Text="시작"
+                                   Margin="0,0,0,4" />
+
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="90" />
+                            </Grid.ColumnDefinitions>
+
+                            <DatePicker Grid.Column="0"
+                                        SelectedDate="{Binding NewStartDate}" />
+
+                            <TextBox Grid.Column="2"
+                                     Text="{Binding NewStartTime, UpdateSourceTrigger=PropertyChanged}"
+                                     Padding="6" />
+                        </Grid>
+
+                        <TextBlock Text="종료"
+                                   Margin="0,0,0,4" />
+
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="90" />
+                            </Grid.ColumnDefinitions>
+
+                            <DatePicker Grid.Column="0"
+                                        SelectedDate="{Binding NewEndDate}" />
+
+                            <TextBox Grid.Column="2"
+                                     Text="{Binding NewEndTime, UpdateSourceTrigger=PropertyChanged}"
+                                     Padding="6" />
+                        </Grid>
+
+                        <CheckBox Content="하루 종일"
+                                  IsChecked="{Binding NewIsAllDay}"
+                                  Margin="0,0,0,10" />
+
+                        <CheckBox Content="알림 사용"
+                                  IsChecked="{Binding NewIsReminderEnabled}"
+                                  Margin="0,0,0,8" />
+
+                        <StackPanel Orientation="Horizontal"
+                                    Margin="0,0,0,10">
+
+                            <ComboBox ItemsSource="{Binding ReminderMinuteOptions}"
+                                      SelectedItem="{Binding NewReminderMinutesBefore}"
+                                      IsEnabled="{Binding NewIsReminderEnabled}"
+                                      Width="100" />
+
+                            <TextBlock Text="분 전 알림"
+                                       VerticalAlignment="Center"
+                                       Margin="8,0,0,0" />
+                        </StackPanel>
+
+                        <TextBlock Text="{Binding ErrorMessage}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,10" />
+
+                        <WrapPanel HorizontalAlignment="Right">
+                            <Button Content="완료"
+                                    Command="{Binding MarkAsCompletedCommand}"
+                                    Padding="12,6"
+                                    Margin="0,0,6,0">
+
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+
+                                        <Style.Triggers>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsEditMode}"
+                                                               Value="True" />
+
+                                                    <Condition Binding="{Binding IsEditingCompleted}"
+                                                               Value="False" />
+                                                </MultiDataTrigger.Conditions>
+
+                                                <Setter Property="Visibility"
+                                                        Value="Visible" />
+                                            </MultiDataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+
+                            <Button Content="완료 취소"
+                                    Command="{Binding MarkAsIncompleteCommand}"
+                                    Padding="12,6"
+                                    Margin="0,0,6,0">
+
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+
+                                        <Style.Triggers>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsEditMode}"
+                                                               Value="True" />
+
+                                                    <Condition Binding="{Binding IsEditingCompleted}"
+                                                               Value="True" />
+                                                </MultiDataTrigger.Conditions>
+
+                                                <Setter Property="Visibility"
+                                                        Value="Visible" />
+                                            </MultiDataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+
+                            <Button Content="삭제"
+                                    Command="{Binding DeleteScheduleCommand}"
+                                    Padding="12,6"
+                                    Margin="0,0,6,0">
+
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsEditMode}"
+                                                         Value="True">
+                                                <Setter Property="Visibility"
+                                                        Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+
+                            <Button Content="취소"
+                                    Command="{Binding CancelEditCommand}"
+                                    Padding="12,6"
+                                    Margin="0,0,6,0" />
+
+                            <Button Content="저장"
+                                    Command="{Binding SaveScheduleCommand}"
+                                    Padding="12,6" />
+                        </WrapPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
     </Grid>
 </UserControl>

@@ -40,6 +40,10 @@ public class SqliteScheduleRepository : IScheduleRepository
                 StartAt,
                 EndAt,
                 IsAllDay,
+                IsCompleted,
+                CompletedAt,
+                IsReminderEnabled,
+                ReminderMinutesBefore,
                 CreatedAt,
                 UpdatedAt
             FROM Schedules
@@ -76,6 +80,10 @@ public class SqliteScheduleRepository : IScheduleRepository
                 StartAt,
                 EndAt,
                 IsAllDay,
+                IsCompleted,
+                CompletedAt,
+                IsReminderEnabled,
+                ReminderMinutesBefore,
                 CreatedAt,
                 UpdatedAt
             FROM Schedules
@@ -114,6 +122,10 @@ public class SqliteScheduleRepository : IScheduleRepository
                 StartAt,
                 EndAt,
                 IsAllDay,
+                IsCompleted,
+                CompletedAt,
+                IsReminderEnabled,
+                ReminderMinutesBefore,
                 CreatedAt,
                 UpdatedAt
             )
@@ -125,6 +137,10 @@ public class SqliteScheduleRepository : IScheduleRepository
                 $startAt,
                 $endAt,
                 $isAllDay,
+                $isCompleted,
+                $completedAt,
+                $isReminderEnabled,
+                $reminderMinutesBefore,
                 $createdAt,
                 $updatedAt
             );
@@ -154,6 +170,10 @@ public class SqliteScheduleRepository : IScheduleRepository
                 StartAt = $startAt,
                 EndAt = $endAt,
                 IsAllDay = $isAllDay,
+                IsCompleted = $isCompleted,
+                CompletedAt = $completedAt,
+                IsReminderEnabled = $isReminderEnabled,
+                ReminderMinutesBefore = $reminderMinutesBefore,
                 CreatedAt = $createdAt,
                 UpdatedAt = $updatedAt
             WHERE Id = $id;
@@ -188,21 +208,54 @@ public class SqliteScheduleRepository : IScheduleRepository
     /// <summary>
     /// ScheduleItem의 값을 SQLite 명령의 파라미터로 추가합니다.
     /// </summary>
-    private static void AddScheduleParameters(SqliteCommand command, ScheduleItem schedule)
+    private static void AddScheduleParameters(
+        SqliteCommand command,
+        ScheduleItem schedule)
     {
         command.Parameters.AddWithValue("$id", schedule.Id.ToString());
         command.Parameters.AddWithValue("$title", schedule.Title);
         command.Parameters.AddWithValue("$description", schedule.Description);
 
         // "O" 형식은 날짜와 시간을 손실 없이 저장하기 위한 ISO 8601 기반 형식입니다.
-        command.Parameters.AddWithValue("$startAt", schedule.StartAt.ToString("O", CultureInfo.InvariantCulture));
-        command.Parameters.AddWithValue("$endAt", schedule.EndAt.ToString("O", CultureInfo.InvariantCulture));
+        command.Parameters.AddWithValue(
+            "$startAt",
+            schedule.StartAt.ToString("O", CultureInfo.InvariantCulture));
+
+        command.Parameters.AddWithValue(
+            "$endAt",
+            schedule.EndAt.ToString("O", CultureInfo.InvariantCulture));
 
         // SQLite에는 bool 전용 타입이 없으므로 false는 0, true는 1로 저장합니다.
-        command.Parameters.AddWithValue("$isAllDay", schedule.IsAllDay ? 1 : 0);
+        command.Parameters.AddWithValue(
+            "$isAllDay",
+            schedule.IsAllDay ? 1 : 0);
 
-        command.Parameters.AddWithValue("$createdAt", schedule.CreatedAt.ToString("O", CultureInfo.InvariantCulture));
-        command.Parameters.AddWithValue("$updatedAt", schedule.UpdatedAt.ToString("O", CultureInfo.InvariantCulture));
+        command.Parameters.AddWithValue(
+            "$isCompleted",
+            schedule.IsCompleted ? 1 : 0);
+
+        // 완료되지 않은 일정의 CompletedAt은 SQLite NULL로 저장합니다.
+        command.Parameters.AddWithValue(
+            "$completedAt",
+            schedule.CompletedAt.HasValue
+                ? schedule.CompletedAt.Value.ToString("O", CultureInfo.InvariantCulture)
+                : DBNull.Value);
+
+        command.Parameters.AddWithValue(
+            "$isReminderEnabled",
+            schedule.IsReminderEnabled ? 1 : 0);
+
+        command.Parameters.AddWithValue(
+            "$reminderMinutesBefore",
+            schedule.ReminderMinutesBefore);
+
+        command.Parameters.AddWithValue(
+            "$createdAt",
+            schedule.CreatedAt.ToString("O", CultureInfo.InvariantCulture));
+
+        command.Parameters.AddWithValue(
+            "$updatedAt",
+            schedule.UpdatedAt.ToString("O", CultureInfo.InvariantCulture));
     }
 
     /// <summary>
@@ -228,13 +281,26 @@ public class SqliteScheduleRepository : IScheduleRepository
 
             IsAllDay = reader.GetInt32(5) != 0,
 
+            IsCompleted = reader.GetInt32(6) != 0,
+
+            CompletedAt = reader.IsDBNull(7)
+                ? null
+                : DateTime.Parse(
+                    reader.GetString(7),
+                    CultureInfo.InvariantCulture,
+                    DateTimeStyles.RoundtripKind),
+
+            IsReminderEnabled = reader.GetInt32(8) != 0,
+
+            ReminderMinutesBefore = reader.GetInt32(9),
+
             CreatedAt = DateTime.Parse(
-                reader.GetString(6),
+                reader.GetString(10),
                 CultureInfo.InvariantCulture,
                 DateTimeStyles.RoundtripKind),
 
             UpdatedAt = DateTime.Parse(
-                reader.GetString(7),
+                reader.GetString(11),
                 CultureInfo.InvariantCulture,
                 DateTimeStyles.RoundtripKind)
         };

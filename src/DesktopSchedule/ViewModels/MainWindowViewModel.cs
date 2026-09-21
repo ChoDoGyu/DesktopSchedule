@@ -1,4 +1,5 @@
 ﻿using DesktopSchedule.Commands; // RelayCommand를 사용하기 위해 필요합니다.
+using DesktopSchedule.Services; // ScheduleService를 사용하기 위해 필요합니다.
 
 namespace DesktopSchedule.ViewModels;
 
@@ -7,6 +8,9 @@ namespace DesktopSchedule.ViewModels;
 /// </summary>
 public class MainWindowViewModel : ViewModelBase
 {
+    // 일정 관련 기능을 화면 ViewModel에 전달하기 위해 저장합니다.
+    private readonly ScheduleService _scheduleService;
+
     // MainWindow의 제목을 저장합니다.
     private string _title = "DesktopSchedule";
 
@@ -52,9 +56,6 @@ public class MainWindowViewModel : ViewModelBase
     public ViewModelBase CurrentViewModel
     {
         get => _currentViewModel;
-
-        // 현재 화면이 변경되면 PropertyChanged를 발생시켜
-        // WPF가 새로운 화면을 표시할 수 있도록 합니다.
         set => SetProperty(ref _currentViewModel, value);
     }
 
@@ -78,10 +79,13 @@ public class MainWindowViewModel : ViewModelBase
     /// </summary>
     public RelayCommand ShowSettingsCommand { get; }
 
-    public MainWindowViewModel()
+    public MainWindowViewModel(ScheduleService scheduleService)
     {
+        // 일정 관련 화면에서 사용할 Service를 전달받아 보관합니다.
+        _scheduleService = scheduleService ?? throw new ArgumentNullException(nameof(scheduleService));
+
         // 프로그램을 처음 실행했을 때 월간 달력 화면을 기본 화면으로 사용합니다.
-        _currentViewModel = new MonthlyCalendarViewModel();
+        _currentViewModel = new MonthlyCalendarViewModel(_scheduleService);
 
         // 각 Command가 실행되었을 때 CurrentViewModel을
         // 해당 화면의 ViewModel로 변경하도록 연결합니다.
@@ -96,7 +100,7 @@ public class MainWindowViewModel : ViewModelBase
     /// </summary>
     private void ShowMonthlyCalendar()
     {
-        CurrentViewModel = new MonthlyCalendarViewModel();
+        CurrentViewModel = new MonthlyCalendarViewModel(_scheduleService);
     }
 
     /// <summary>
