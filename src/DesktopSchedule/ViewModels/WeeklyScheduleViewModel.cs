@@ -2,12 +2,14 @@
 using DesktopSchedule.Commands;
 using DesktopSchedule.Models;
 using DesktopSchedule.Services;
+using DesktopSchedule.Utilities;
 
 namespace DesktopSchedule.ViewModels;
 
 /// <summary>
 /// 주간 7일 일정 화면의 달력 상태와 사용자 동작을 관리합니다.
-/// 일정 편집과 CRUD 공통 기능은 ScheduleEditorViewModelBase에서 제공합니다.
+/// 일정 편집과 CRUD 공통 기능은 ScheduleEditorViewModelBase에서 제공하고,
+/// 일정 날짜 판정과 연결 일정 배치 계산은 ScheduleCalendarCalculator에서 제공합니다.
 /// </summary>
 public class WeeklyScheduleViewModel : ScheduleEditorViewModelBase
 {
@@ -154,92 +156,27 @@ public class WeeklyScheduleViewModel : ScheduleEditorViewModelBase
     }
 
     /// <summary>
-    /// 두 날짜 이상에 걸친 일정을 하나의 연결된 막대로 구성합니다.
-    /// 일정이 현재 주의 바깥까지 이어지면 현재 주에 보이는 부분만 잘라 표시합니다.
+    /// 공통 계산기를 사용해 현재 주에서 보이는 여러 날짜 일정의
+    /// 표시 범위와 겹침 행을 계산한 뒤 화면용 ViewModel로 변환합니다.
     /// </summary>
     private void LoadSpanningSchedules(IReadOnlyList<ScheduleItem> schedules)
     {
-        var candidates = new List<SpanningScheduleCandidate>();
+        var layout = ScheduleCalendarCalculator.CreateWeekLayout(schedules, WeekStartDate);
 
-        foreach (var schedule in schedules)
+        foreach (var placement in layout.Placements)
         {
-            if (!IsSpanningSchedule(schedule))
-            {
-                continue;
-            }
-
-            var scheduleStartDate = schedule.StartAt.Date;
-            var scheduleEndDate = GetLastDisplayDate(schedule);
-
-            var visibleStartDate = scheduleStartDate < WeekStartDate ? WeekStartDate : scheduleStartDate;
-            var visibleEndDate = scheduleEndDate > WeekEndDate ? WeekEndDate : scheduleEndDate;
-
-            if (visibleStartDate > visibleEndDate)
-            {
-                continue;
-            }
-
-            var startDayIndex = (visibleStartDate - WeekStartDate).Days;
-            var endDayIndex = (visibleEndDate - WeekStartDate).Days;
-
-            candidates.Add(new SpanningScheduleCandidate(
-                schedule,
-                visibleStartDate,
-                startDayIndex,
-                endDayIndex));
-        }
-
-        var orderedCandidates = candidates
-            .OrderBy(candidate => candidate.StartDayIndex)
-            .ThenByDescending(candidate => candidate.EndDayIndex)
-            .ThenBy(candidate => candidate.Schedule.StartAt)
-            .ToList();
-
-        var rowEndDayIndices = new List<int>();
-
-        foreach (var candidate in orderedCandidates)
-        {
-            var rowIndex = FindAvailableSpanningRow(rowEndDayIndices, candidate.StartDayIndex);
-
-            if (rowIndex == rowEndDayIndices.Count)
-            {
-                rowEndDayIndices.Add(candidate.EndDayIndex);
-            }
-            else
-            {
-                rowEndDayIndices[rowIndex] = candidate.EndDayIndex;
-            }
-
-            var daySpan = candidate.EndDayIndex - candidate.StartDayIndex + 1;
-
             SpanningSchedules.Add(
                 new WeeklySpanningScheduleViewModel(
-                    candidate.Schedule,
-                    candidate.VisibleStartDate,
-                    candidate.StartDayIndex,
-                    daySpan,
-                    rowIndex));
+                    placement.Schedule,
+                    placement.VisibleStartDate,
+                    placement.StartDayIndex,
+                    placement.DaySpan,
+                    placement.RowIndex));
         }
 
-        SpanningAreaHeight = rowEndDayIndices.Count == 0
+        SpanningAreaHeight = layout.RowCount == 0
             ? 0
-            : rowEndDayIndices.Count * SpanningScheduleRowHeight + SpanningScheduleAreaPadding;
-    }
-
-    /// <summary>
-    /// 여러 날짜 일정 막대가 사용할 수 있는 가장 위쪽의 빈 행을 찾습니다.
-    /// </summary>
-    private static int FindAvailableSpanningRow(List<int> rowEndDayIndices, int startDayIndex)
-    {
-        for (var index = 0; index < rowEndDayIndices.Count; index++)
-        {
-            if (startDayIndex > rowEndDayIndices[index])
-            {
-                return index;
-            }
-        }
-
-        return rowEndDayIndices.Count;
+            : layout.RowCount * SpanningScheduleRowHeight + SpanningScheduleAreaPadding;
     }
 
     /// <summary>
@@ -258,7 +195,9 @@ public class WeeklyScheduleViewModel : ScheduleEditorViewModelBase
             };
 
             var schedulesOnDate = schedules
-                .Where(schedule => !IsSpanningSchedule(schedule) && IsScheduleOnDate(schedule, date))
+                .Where(schedule =>
+                    !ScheduleCalendarCalculator.IsSpanningSchedule(schedule) &&
+                    ScheduleCalendarCalculator.IsScheduleOnDate(schedule, date))
                 .OrderBy(schedule => schedule.IsAllDay ? 0 : 1)
                 .ThenBy(schedule => schedule.StartAt)
                 .ThenBy(schedule => schedule.Title)
@@ -316,53 +255,6 @@ public class WeeklyScheduleViewModel : ScheduleEditorViewModelBase
         {
             day.IsDropTarget = day == targetDay;
         }
-    }
-
-    /// <summary>
-    /// 일정이 두 개 이상의 실제 날짜 칸을 차지하는지 확인합니다.
-    /// </summary>
-    private static bool IsSpanningSchedule(ScheduleItem schedule)
-    {
-        return GetLastDisplayDate(schedule) > schedule.StartAt.Date;
-    }
-
-    /// <summary>
-    /// 일정이 화면에서 실제로 마지막으로 차지하는 날짜를 반환합니다.
-    /// 시간 일정이 정확히 다음 날 00:00에 끝나면 그 다음 날짜는 차지하지 않습니다.
-    /// 하루 종일 일정의 종료 날짜는 포함해서 표시합니다.
-    /// </summary>
-    private static DateTime GetLastDisplayDate(ScheduleItem schedule)
-    {
-        if (schedule.IsAllDay)
-        {
-            return schedule.EndAt.Date;
-        }
-
-        if (schedule.EndAt > schedule.StartAt &&
-            schedule.EndAt.TimeOfDay == TimeSpan.Zero)
-        {
-            return schedule.EndAt.Date.AddDays(-1);
-        }
-
-        return schedule.EndAt.Date;
-    }
-
-    /// <summary>
-    /// 지정한 일정이 현재 날짜에 포함되는지 확인합니다.
-    /// </summary>
-    private static bool IsScheduleOnDate(ScheduleItem schedule, DateTime date)
-    {
-        if (schedule.IsAllDay)
-        {
-            return schedule.StartAt.Date <= date.Date &&
-                   schedule.EndAt.Date >= date.Date;
-        }
-
-        var dayStart = date.Date;
-        var dayEnd = dayStart.AddDays(1);
-
-        return schedule.StartAt < dayEnd &&
-               schedule.EndAt > dayStart;
     }
 
     /// <summary>
@@ -428,13 +320,4 @@ public class WeeklyScheduleViewModel : ScheduleEditorViewModelBase
     {
         return date.Date.AddDays(-(int)date.DayOfWeek);
     }
-
-    /// <summary>
-    /// 여러 날짜 일정의 주간 표시 계산에 사용하는 내부 데이터입니다.
-    /// </summary>
-    private readonly record struct SpanningScheduleCandidate(
-        ScheduleItem Schedule,
-        DateTime VisibleStartDate,
-        int StartDayIndex,
-        int EndDayIndex);
 }

@@ -2,12 +2,14 @@
 using DesktopSchedule.Commands; // RelayCommand를 사용하기 위해 필요합니다.
 using DesktopSchedule.Models; // ScheduleItem을 사용하기 위해 필요합니다.
 using DesktopSchedule.Services; // ScheduleService를 생성자에서 전달받기 위해 필요합니다.
+using DesktopSchedule.Utilities; // 주간/월간 공통 일정 날짜 및 배치 계산을 사용하기 위해 필요합니다.
 
 namespace DesktopSchedule.ViewModels;
 
 /// <summary>
 /// 월간 달력 화면의 6주 × 7일 구조와 월간 일정 배치를 관리합니다.
-/// 일정 편집과 CRUD 공통 기능은 ScheduleEditorViewModelBase에서 제공합니다.
+/// 일정 편집과 CRUD 공통 기능은 ScheduleEditorViewModelBase에서 제공하고,
+/// 일정 날짜 판정과 연결 일정 배치 계산은 ScheduleCalendarCalculator에서 제공합니다.
 /// </summary>
 public class MonthlyCalendarViewModel : ScheduleEditorViewModelBase
 {
@@ -236,7 +238,9 @@ public class MonthlyCalendarViewModel : ScheduleEditorViewModelBase
             foreach (var day in week.Days)
             {
                 var schedulesOnDate = schedules
-                    .Where(schedule => !IsSpanningSchedule(schedule) && IsScheduleOnDate(schedule, day.Date))
+                    .Where(schedule =>
+                        !ScheduleCalendarCalculator.IsSpanningSchedule(schedule) &&
+                        ScheduleCalendarCalculator.IsScheduleOnDate(schedule, day.Date))
                     .OrderBy(schedule => schedule.IsAllDay ? 0 : 1)
                     .ThenBy(schedule => schedule.StartAt)
                     .ThenBy(schedule => schedule.Title)
@@ -252,6 +256,7 @@ public class MonthlyCalendarViewModel : ScheduleEditorViewModelBase
 
     /// <summary>
     /// 여러 날짜에 걸친 일정을 각 주에서 보이는 구간으로 분할합니다.
+    /// 실제 범위 계산과 겹침 행 계산은 공통 계산기에 위임합니다.
     /// </summary>
     private void LoadSpanningSchedules(IReadOnlyList<ScheduleItem> schedules)
     {
@@ -262,149 +267,27 @@ public class MonthlyCalendarViewModel : ScheduleEditorViewModelBase
     }
 
     /// <summary>
-    /// 한 주에 표시할 여러 날짜 일정들을 수집하고
-    /// 겹치지 않는 가장 위쪽 행부터 배치합니다.
+    /// 공통 계산기를 사용해 한 주의 연결 일정 배치 결과를 만들고
+    /// 월간 화면용 ViewModel로 변환합니다.
     /// </summary>
     private static void LoadSpanningSchedulesForWeek(MonthlyWeekViewModel week, IReadOnlyList<ScheduleItem> schedules)
     {
-        var candidates = new List<MonthlySpanningScheduleCandidate>();
+        var layout = ScheduleCalendarCalculator.CreateWeekLayout(schedules, week.WeekStartDate);
 
-        foreach (var schedule in schedules)
+        foreach (var placement in layout.Placements)
         {
-            if (!IsSpanningSchedule(schedule))
-            {
-                continue;
-            }
-
-            var scheduleStartDate = schedule.StartAt.Date;
-            var scheduleEndDate = GetLastDisplayDate(schedule);
-
-            var visibleStartDate = scheduleStartDate < week.WeekStartDate
-                ? week.WeekStartDate
-                : scheduleStartDate;
-
-            var visibleEndDate = scheduleEndDate > week.WeekEndDate
-                ? week.WeekEndDate
-                : scheduleEndDate;
-
-            if (visibleStartDate > visibleEndDate)
-            {
-                continue;
-            }
-
-            var startDayIndex = (visibleStartDate - week.WeekStartDate).Days;
-            var endDayIndex = (visibleEndDate - week.WeekStartDate).Days;
-
-            candidates.Add(
-                new MonthlySpanningScheduleCandidate(
-                    schedule,
-                    visibleStartDate,
-                    visibleEndDate,
-                    startDayIndex,
-                    endDayIndex,
-                    scheduleEndDate > visibleEndDate));
-        }
-
-        // 같은 날짜에 여러 일정이 시작하면 긴 일정을 먼저 배치합니다.
-        var orderedCandidates = candidates
-            .OrderBy(candidate => candidate.StartDayIndex)
-            .ThenByDescending(candidate => candidate.EndDayIndex)
-            .ThenBy(candidate => candidate.Schedule.StartAt)
-            .ThenBy(candidate => candidate.Schedule.Title)
-            .ToList();
-
-        // 각 행에서 마지막으로 사용하고 있는 날짜 열 번호입니다.
-        var rowEndDayIndices = new List<int>();
-
-        foreach (var candidate in orderedCandidates)
-        {
-            var rowIndex = FindAvailableSpanningRow(rowEndDayIndices, candidate.StartDayIndex);
-
-            if (rowIndex == rowEndDayIndices.Count)
-            {
-                rowEndDayIndices.Add(candidate.EndDayIndex);
-            }
-            else
-            {
-                rowEndDayIndices[rowIndex] = candidate.EndDayIndex;
-            }
-
-            var daySpan = candidate.EndDayIndex - candidate.StartDayIndex + 1;
-
             week.SpanningSchedules.Add(
                 new MonthlySpanningScheduleViewModel(
-                    candidate.Schedule,
-                    candidate.VisibleStartDate,
-                    candidate.VisibleEndDate,
-                    candidate.StartDayIndex,
-                    daySpan,
-                    rowIndex,
-                    candidate.ContinuesToNextWeek));
+                    placement.Schedule,
+                    placement.VisibleStartDate,
+                    placement.VisibleEndDate,
+                    placement.StartDayIndex,
+                    placement.DaySpan,
+                    placement.RowIndex,
+                    placement.ContinuesToNextWeek));
         }
 
-        week.UpdateSpanningRowCount(rowEndDayIndices.Count);
-    }
-
-    /// <summary>
-    /// 연결 일정이 사용할 수 있는 가장 위쪽의 빈 행을 찾습니다.
-    /// </summary>
-    private static int FindAvailableSpanningRow(List<int> rowEndDayIndices, int startDayIndex)
-    {
-        for (var rowIndex = 0; rowIndex < rowEndDayIndices.Count; rowIndex++)
-        {
-            if (startDayIndex > rowEndDayIndices[rowIndex])
-            {
-                return rowIndex;
-            }
-        }
-
-        return rowEndDayIndices.Count;
-    }
-
-    /// <summary>
-    /// 일정이 월간 달력에서 두 개 이상의 날짜 셀을 차지하는지 확인합니다.
-    /// </summary>
-    private static bool IsSpanningSchedule(ScheduleItem schedule)
-    {
-        return GetLastDisplayDate(schedule) > schedule.StartAt.Date;
-    }
-
-    /// <summary>
-    /// 일정이 월간 달력에서 실제로 마지막으로 차지하는 날짜를 반환합니다.
-    /// 시간 일정이 정확히 다음 날 00:00에 끝나면 그 날짜는 포함하지 않습니다.
-    /// </summary>
-    private static DateTime GetLastDisplayDate(ScheduleItem schedule)
-    {
-        if (schedule.IsAllDay)
-        {
-            return schedule.EndAt.Date;
-        }
-
-        if (schedule.EndAt > schedule.StartAt &&
-            schedule.EndAt.TimeOfDay == TimeSpan.Zero)
-        {
-            return schedule.EndAt.Date.AddDays(-1);
-        }
-
-        return schedule.EndAt.Date;
-    }
-
-    /// <summary>
-    /// 지정한 일정이 특정 날짜에 실제로 포함되는지 확인합니다.
-    /// </summary>
-    private static bool IsScheduleOnDate(ScheduleItem schedule, DateTime date)
-    {
-        if (schedule.IsAllDay)
-        {
-            return schedule.StartAt.Date <= date.Date &&
-                   schedule.EndAt.Date >= date.Date;
-        }
-
-        var dayStart = date.Date;
-        var dayEnd = dayStart.AddDays(1);
-
-        return schedule.StartAt < dayEnd &&
-               schedule.EndAt > dayStart;
+        week.UpdateSpanningRowCount(layout.RowCount);
     }
 
     /// <summary>
@@ -463,15 +346,4 @@ public class MonthlyCalendarViewModel : ScheduleEditorViewModelBase
         SelectedDate = selectedDay.Date;
         UpdateSelectedDateState();
     }
-
-    /// <summary>
-    /// 한 주 안에서 여러 날짜 일정의 표시 범위를 계산할 때 사용하는 내부 데이터입니다.
-    /// </summary>
-    private readonly record struct MonthlySpanningScheduleCandidate(
-        ScheduleItem Schedule,
-        DateTime VisibleStartDate,
-        DateTime VisibleEndDate,
-        int StartDayIndex,
-        int EndDayIndex,
-        bool ContinuesToNextWeek);
 }
