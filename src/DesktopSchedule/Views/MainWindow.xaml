@@ -5,8 +5,14 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DesktopSchedule.Views"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+        Title="{Binding Title}"
+        Height="450"
+        Width="800">
 
+    <Grid>
+        <TextBlock Text="{Binding Title}"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   FontSize="32" />
     </Grid>
 </Window>
