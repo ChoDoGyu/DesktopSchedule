@@ -4,12 +4,12 @@ namespace DesktopSchedule.Utilities;
 
 /// <summary>
 /// 주간과 월간 달력에서 공통으로 사용하는 일정 표시 계산을 제공합니다.
-/// 일정이 어느 날짜에 보이는지, 여러 날짜 일정인지,
-/// 한 주 안에서 어느 범위를 차지하고 어느 행에 배치할지를 계산합니다.
+/// 일정이 어느 날짜에 보이는지, 한 주에서 어느 범위를 차지하는지,
+/// 다른 일정과 겹치지 않도록 어느 행에 배치할지를 계산합니다.
 /// </summary>
 /// <remarks>
 /// 이 클래스는 화면 상태를 가지지 않는 순수 계산 전용 클래스입니다.
-/// 주간과 월간 화면이 같은 일정 표시 규칙을 사용하도록 하는 것이 목적입니다.
+/// 주간과 월간 화면이 같은 일정 표시 및 배치 규칙을 사용하도록 하는 것이 목적입니다.
 /// </remarks>
 public static class ScheduleCalendarCalculator
 {
@@ -67,7 +67,6 @@ public static class ScheduleCalendarCalculator
 
         var targetDate = date.Date;
 
-        // 하루 종일 일정은 시작 날짜와 종료 날짜를 모두 포함합니다.
         if (schedule.IsAllDay)
         {
             return schedule.StartAt.Date <= targetDate &&
@@ -77,14 +76,13 @@ public static class ScheduleCalendarCalculator
         var dayStart = targetDate;
         var dayEnd = dayStart.AddDays(1);
 
-        // 시간 일정은 해당 날짜의 00:00 ~ 다음 날 00:00 범위와
-        // 실제 일정 시간이 겹치는지를 검사합니다.
         return schedule.StartAt < dayEnd &&
                schedule.EndAt > dayStart;
     }
 
     /// <summary>
-    /// 지정한 한 주에 표시해야 하는 여러 날짜 일정의 위치와 겹침 행을 계산합니다.
+    /// 지정한 한 주에 표시해야 하는 모든 일정의 위치와 겹침 행을 계산합니다.
+    /// 단일 날짜 일정과 여러 날짜 일정 모두 동일한 행 배치 규칙을 사용합니다.
     /// </summary>
     /// <param name="schedules">표시 대상으로 사용할 전체 일정 목록입니다.</param>
     /// <param name="weekStartDate">해당 주의 시작 날짜입니다. 일요일을 기준으로 사용합니다.</param>
@@ -100,31 +98,22 @@ public static class ScheduleCalendarCalculator
 
         foreach (var schedule in schedules)
         {
-            if (!IsSpanningSchedule(schedule))
+            var scheduleStartDate = schedule.StartAt.Date;
+            var scheduleEndDate = GetLastDisplayDate(schedule);
+
+            if (scheduleEndDate < normalizedWeekStart ||
+                scheduleStartDate > weekEndDate)
             {
                 continue;
             }
 
-            var scheduleStartDate = schedule.StartAt.Date;
-            var scheduleEndDate = GetLastDisplayDate(schedule);
-
-            // 실제 일정이 현재 주보다 앞에서 시작했다면
-            // 화면에는 현재 주의 첫 날짜부터 보이도록 잘라냅니다.
             var visibleStartDate = scheduleStartDate < normalizedWeekStart
                 ? normalizedWeekStart
                 : scheduleStartDate;
 
-            // 실제 일정이 현재 주보다 뒤까지 이어진다면
-            // 화면에는 현재 주의 마지막 날짜까지만 보이도록 잘라냅니다.
             var visibleEndDate = scheduleEndDate > weekEndDate
                 ? weekEndDate
                 : scheduleEndDate;
-
-            // 현재 주와 전혀 겹치지 않는 일정은 표시할 필요가 없습니다.
-            if (visibleStartDate > visibleEndDate)
-            {
-                continue;
-            }
 
             var startDayIndex = (visibleStartDate - normalizedWeekStart).Days;
             var endDayIndex = (visibleEndDate - normalizedWeekStart).Days;
@@ -139,20 +128,15 @@ public static class ScheduleCalendarCalculator
                     scheduleEndDate > visibleEndDate));
         }
 
-        // 같은 날짜에 여러 일정이 시작하는 경우
-        // 더 긴 일정을 먼저 배치하고,
-        // 그다음 실제 시작 시간과 제목을 사용해 안정적인 순서를 유지합니다.
         var orderedCandidates = candidates
             .OrderBy(candidate => candidate.StartDayIndex)
             .ThenByDescending(candidate => candidate.EndDayIndex)
+            .ThenBy(candidate => candidate.Schedule.IsAllDay ? 0 : 1)
             .ThenBy(candidate => candidate.Schedule.StartAt)
             .ThenBy(candidate => candidate.Schedule.Title)
             .ToList();
 
-        // 각 행이 현재 어느 요일 열까지 사용되고 있는지 저장합니다.
-        // 예를 들어 첫 번째 행이 목요일까지 차지하고 있으면 4가 저장됩니다.
         var rowEndDayIndices = new List<int>();
-
         var placements = new List<CalendarSchedulePlacement>();
 
         foreach (var candidate in orderedCandidates)
@@ -161,13 +145,10 @@ public static class ScheduleCalendarCalculator
 
             if (rowIndex == rowEndDayIndices.Count)
             {
-                // 재사용 가능한 행이 없으므로 새 행을 추가합니다.
                 rowEndDayIndices.Add(candidate.EndDayIndex);
             }
             else
             {
-                // 기존 빈 행을 재사용하고
-                // 이 일정이 새롭게 차지하는 마지막 열로 갱신합니다.
                 rowEndDayIndices[rowIndex] = candidate.EndDayIndex;
             }
 
@@ -189,22 +170,19 @@ public static class ScheduleCalendarCalculator
     }
 
     /// <summary>
-    /// 연결 일정이 사용할 수 있는 가장 위쪽의 빈 행을 찾습니다.
+    /// 일정이 사용할 수 있는 가장 위쪽의 빈 행을 찾습니다.
+    /// 기존 일정과 날짜 범위가 겹치지 않으면 같은 행을 재사용합니다.
     /// </summary>
     private static int FindAvailableRow(IReadOnlyList<int> rowEndDayIndices, int startDayIndex)
     {
         for (var rowIndex = 0; rowIndex < rowEndDayIndices.Count; rowIndex++)
         {
-            // 기존 일정이 끝난 열보다 새로운 일정이 뒤에서 시작하면
-            // 두 일정이 겹치지 않으므로 같은 행을 사용할 수 있습니다.
             if (startDayIndex > rowEndDayIndices[rowIndex])
             {
                 return rowIndex;
             }
         }
 
-        // 기존 행을 사용할 수 없다면
-        // 현재 행 개수가 그대로 새로운 행 번호가 됩니다.
         return rowEndDayIndices.Count;
     }
 
@@ -221,7 +199,7 @@ public static class ScheduleCalendarCalculator
 }
 
 /// <summary>
-/// 한 주에 표시할 여러 날짜 일정의 최종 계산 결과입니다.
+/// 한 주에 표시할 모든 일정의 최종 계산 결과입니다.
 /// </summary>
 public sealed class CalendarWeekLayout
 {
@@ -231,7 +209,7 @@ public sealed class CalendarWeekLayout
     public IReadOnlyList<CalendarSchedulePlacement> Placements { get; }
 
     /// <summary>
-    /// 모든 연결 일정을 겹치지 않게 표시하기 위해 필요한 행 개수입니다.
+    /// 모든 일정을 겹치지 않게 표시하기 위해 필요한 행 개수입니다.
     /// </summary>
     public int RowCount { get; }
 
@@ -249,7 +227,9 @@ public sealed class CalendarWeekLayout
 }
 
 /// <summary>
-/// 연결 일정 하나가 특정 주에서 차지할 실제 표시 위치를 나타냅니다.
+/// 일정 하나가 특정 주에서 차지할 실제 표시 위치를 나타냅니다.
+/// 단일 날짜 일정은 DaySpan이 1이고,
+/// 여러 날짜 일정은 차지하는 날짜 수만큼 DaySpan이 증가합니다.
 /// </summary>
 public readonly record struct CalendarSchedulePlacement(
     ScheduleItem Schedule,

@@ -9,7 +9,7 @@ namespace DesktopSchedule.ViewModels;
 /// <summary>
 /// 월간 달력 화면의 6주 × 7일 구조와 월간 일정 배치를 관리합니다.
 /// 일정 편집과 CRUD 공통 기능은 ScheduleEditorViewModelBase에서 제공하고,
-/// 일정 날짜 판정과 연결 일정 배치 계산은 ScheduleCalendarCalculator에서 제공합니다.
+/// 모든 일정의 날짜 범위와 Row 배치 계산은 ScheduleCalendarCalculator에서 제공합니다.
 /// </summary>
 public class MonthlyCalendarViewModel : ScheduleEditorViewModelBase
 {
@@ -28,7 +28,6 @@ public class MonthlyCalendarViewModel : ScheduleEditorViewModelBase
 
     /// <summary>
     /// 현재 화면에서 사용하는 전체 일정 목록입니다.
-    /// 날짜 셀과 연결 일정 막대는 모두 같은 ScheduleItem 데이터를 사용합니다.
     /// </summary>
     public ObservableCollection<ScheduleItem> Schedules { get; } = new();
 
@@ -141,7 +140,7 @@ public class MonthlyCalendarViewModel : ScheduleEditorViewModelBase
 
     /// <summary>
     /// 저장된 일정을 다시 불러오고
-    /// 현재 월간 달력 범위에 맞게 일정 데이터를 다시 배치합니다.
+    /// 현재 월간 달력 범위에 맞게 모든 일정을 공통 Row 구조로 다시 배치합니다.
     /// </summary>
     public void LoadSchedules()
     {
@@ -155,8 +154,7 @@ public class MonthlyCalendarViewModel : ScheduleEditorViewModelBase
             Schedules.Add(schedule);
         }
 
-        LoadSingleDaySchedules(schedules);
-        LoadSpanningSchedules(schedules);
+        LoadScheduleLayouts(schedules);
     }
 
     /// <summary>
@@ -228,49 +226,22 @@ public class MonthlyCalendarViewModel : ScheduleEditorViewModelBase
     }
 
     /// <summary>
-    /// 현재 42일 달력 범위에 포함되는 단일 날짜 일정을 날짜별로 배치합니다.
-    /// 여러 날짜 일정은 연결 막대로 처리하므로 여기서는 제외합니다.
+    /// 현재 달력의 모든 일정을 각 주 단위 공통 Row 레이아웃으로 배치합니다.
+    /// 단일 날짜 일정과 여러 날짜 일정 모두 같은 행 계산 규칙을 사용합니다.
     /// </summary>
-    private void LoadSingleDaySchedules(IReadOnlyList<ScheduleItem> schedules)
+    private void LoadScheduleLayouts(IReadOnlyList<ScheduleItem> schedules)
     {
         foreach (var week in Weeks)
         {
-            foreach (var day in week.Days)
-            {
-                var schedulesOnDate = schedules
-                    .Where(schedule =>
-                        !ScheduleCalendarCalculator.IsSpanningSchedule(schedule) &&
-                        ScheduleCalendarCalculator.IsScheduleOnDate(schedule, day.Date))
-                    .OrderBy(schedule => schedule.IsAllDay ? 0 : 1)
-                    .ThenBy(schedule => schedule.StartAt)
-                    .ThenBy(schedule => schedule.Title)
-                    .ToList();
-
-                foreach (var schedule in schedulesOnDate)
-                {
-                    day.Schedules.Add(new MonthlyScheduleCardViewModel(schedule, day.Date));
-                }
-            }
+            LoadScheduleLayoutForWeek(week, schedules);
         }
     }
 
     /// <summary>
-    /// 여러 날짜에 걸친 일정을 각 주에서 보이는 구간으로 분할합니다.
-    /// 실제 범위 계산과 겹침 행 계산은 공통 계산기에 위임합니다.
-    /// </summary>
-    private void LoadSpanningSchedules(IReadOnlyList<ScheduleItem> schedules)
-    {
-        foreach (var week in Weeks)
-        {
-            LoadSpanningSchedulesForWeek(week, schedules);
-        }
-    }
-
-    /// <summary>
-    /// 공통 계산기를 사용해 한 주의 연결 일정 배치 결과를 만들고
+    /// 공통 계산기를 사용해 한 주의 전체 일정 배치 결과를 만들고
     /// 월간 화면용 ViewModel로 변환합니다.
     /// </summary>
-    private static void LoadSpanningSchedulesForWeek(MonthlyWeekViewModel week, IReadOnlyList<ScheduleItem> schedules)
+    private static void LoadScheduleLayoutForWeek(MonthlyWeekViewModel week, IReadOnlyList<ScheduleItem> schedules)
     {
         var layout = ScheduleCalendarCalculator.CreateWeekLayout(schedules, week.WeekStartDate);
 

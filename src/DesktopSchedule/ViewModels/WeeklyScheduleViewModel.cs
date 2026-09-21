@@ -9,15 +9,16 @@ namespace DesktopSchedule.ViewModels;
 /// <summary>
 /// 주간 7일 일정 화면의 달력 상태와 사용자 동작을 관리합니다.
 /// 일정 편집과 CRUD 공통 기능은 ScheduleEditorViewModelBase에서 제공하고,
-/// 일정 날짜 판정과 연결 일정 배치 계산은 ScheduleCalendarCalculator에서 제공합니다.
+/// 모든 일정의 날짜 범위와 Row 배치 계산은 ScheduleCalendarCalculator에서 제공합니다.
 /// </summary>
 public class WeeklyScheduleViewModel : ScheduleEditorViewModelBase
 {
-    // 여러 날짜 일정 한 행이 사용하는 화면 높이입니다.
-    private const double SpanningScheduleRowHeight = 31.0;
+    // 일정 한 행이 사용하는 화면 높이입니다.
+    // 공통 일정 Panel의 RowHeight와 동일하게 사용합니다.
+    private const double ScheduleRowHeight = 28.0;
 
-    // 여러 날짜 일정 영역 아래쪽에 추가하는 여백입니다.
-    private const double SpanningScheduleAreaPadding = 4.0;
+    // 일정 영역 아래쪽에 추가하는 여백입니다.
+    private const double ScheduleAreaPadding = 4.0;
 
     // 현재 화면에 표시하고 있는 주의 시작 날짜입니다.
     private DateTime _weekStartDate;
@@ -25,7 +26,7 @@ public class WeeklyScheduleViewModel : ScheduleEditorViewModelBase
     // 사용자가 현재 선택한 날짜입니다.
     private DateTime _selectedDate;
 
-    // 여러 날짜 일정 막대가 사용하는 전체 높이입니다.
+    // 일정 막대가 사용하는 전체 화면 높이입니다.
     private double _spanningAreaHeight;
 
     /// <summary>
@@ -34,12 +35,13 @@ public class WeeklyScheduleViewModel : ScheduleEditorViewModelBase
     public ObservableCollection<WeeklyDayViewModel> Days { get; } = new();
 
     /// <summary>
-    /// 현재 주에서 여러 날짜에 걸쳐 연결해서 표시할 일정 막대입니다.
+    /// 현재 주에 표시할 모든 일정입니다.
+    /// 단일 날짜 일정과 여러 날짜 일정 모두 동일한 공통 Row 구조를 사용합니다.
     /// </summary>
     public ObservableCollection<WeeklySpanningScheduleViewModel> SpanningSchedules { get; } = new();
 
     /// <summary>
-    /// 여러 날짜 일정 막대가 차지할 화면 높이입니다.
+    /// 현재 주의 일정들이 차지할 전체 화면 높이입니다.
     /// </summary>
     public double SpanningAreaHeight
     {
@@ -142,7 +144,7 @@ public class WeeklyScheduleViewModel : ScheduleEditorViewModelBase
     }
 
     /// <summary>
-    /// 현재 주의 날짜별 일정과 여러 날짜 연결 일정을 다시 구성합니다.
+    /// 현재 주의 날짜 정보와 전체 일정 Row 레이아웃을 다시 구성합니다.
     /// </summary>
     private void LoadWeek()
     {
@@ -151,15 +153,15 @@ public class WeeklyScheduleViewModel : ScheduleEditorViewModelBase
 
         var schedules = ScheduleService.GetAll(ShowCompletedSchedules);
 
-        LoadSpanningSchedules(schedules);
-        LoadDays(schedules);
+        LoadScheduleLayout(schedules);
+        LoadDays();
     }
 
     /// <summary>
-    /// 공통 계산기를 사용해 현재 주에서 보이는 여러 날짜 일정의
-    /// 표시 범위와 겹침 행을 계산한 뒤 화면용 ViewModel로 변환합니다.
+    /// 공통 계산기를 사용해 현재 주에서 보이는 모든 일정의
+    /// 날짜 범위와 겹침 Row를 계산한 뒤 주간 화면용 ViewModel로 변환합니다.
     /// </summary>
-    private void LoadSpanningSchedules(IReadOnlyList<ScheduleItem> schedules)
+    private void LoadScheduleLayout(IReadOnlyList<ScheduleItem> schedules)
     {
         var layout = ScheduleCalendarCalculator.CreateWeekLayout(schedules, WeekStartDate);
 
@@ -176,14 +178,14 @@ public class WeeklyScheduleViewModel : ScheduleEditorViewModelBase
 
         SpanningAreaHeight = layout.RowCount == 0
             ? 0
-            : layout.RowCount * SpanningScheduleRowHeight + SpanningScheduleAreaPadding;
+            : layout.RowCount * ScheduleRowHeight + ScheduleAreaPadding;
     }
 
     /// <summary>
-    /// 각 날짜 칸에 표시할 단일 날짜 일정을 구성합니다.
-    /// 여러 날짜 일정은 위쪽 연결 막대에 표시하므로 여기서는 제외합니다.
+    /// 현재 주의 일요일부터 토요일까지 날짜 정보를 생성합니다.
+    /// 일정 자체는 공통 Row 레이아웃에서 별도로 관리합니다.
     /// </summary>
-    private void LoadDays(IReadOnlyList<ScheduleItem> schedules)
+    private void LoadDays()
     {
         for (var dayOffset = 0; dayOffset < 7; dayOffset++)
         {
@@ -193,20 +195,6 @@ public class WeeklyScheduleViewModel : ScheduleEditorViewModelBase
             {
                 IsSelected = date.Date == SelectedDate.Date
             };
-
-            var schedulesOnDate = schedules
-                .Where(schedule =>
-                    !ScheduleCalendarCalculator.IsSpanningSchedule(schedule) &&
-                    ScheduleCalendarCalculator.IsScheduleOnDate(schedule, date))
-                .OrderBy(schedule => schedule.IsAllDay ? 0 : 1)
-                .ThenBy(schedule => schedule.StartAt)
-                .ThenBy(schedule => schedule.Title)
-                .ToList();
-
-            foreach (var schedule in schedulesOnDate)
-            {
-                day.Schedules.Add(new WeeklyScheduleCardViewModel(schedule, date));
-            }
 
             Days.Add(day);
         }

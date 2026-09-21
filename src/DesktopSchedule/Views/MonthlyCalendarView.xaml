@@ -285,71 +285,6 @@
 
                                                             <Grid Grid.Row="1"
                                                                   Height="{Binding DataContext.SpanningAreaHeight, RelativeSource={RelativeSource AncestorType=ItemsControl}}" />
-
-                                                            <ItemsControl Grid.Row="2"
-                                                                          ItemsSource="{Binding Schedules}"
-                                                                          Margin="3,2,3,4">
-
-                                                                <ItemsControl.ItemTemplate>
-                                                                    <DataTemplate>
-
-                                                                        <Border BorderThickness="1"
-                                                                                CornerRadius="3"
-                                                                                Padding="4,2"
-                                                                                Margin="0,0,0,2"
-                                                                                ToolTip="{Binding ToolTipText}"
-                                                                                Cursor="Hand"
-                                                                                PreviewMouseLeftButtonDown="ScheduleElement_PreviewMouseLeftButtonDown">
-
-                                                                            <Border.Style>
-                                                                                <Style TargetType="Border">
-                                                                                    <Setter Property="Background"
-                                                                                            Value="#F2F6FA" />
-                                                                                    <Setter Property="BorderBrush"
-                                                                                            Value="#CEDAE6" />
-                                                                                    <Setter Property="Opacity"
-                                                                                            Value="1" />
-
-                                                                                    <Style.Triggers>
-                                                                                        <DataTrigger Binding="{Binding IsCompleted}"
-                                                                                                     Value="True">
-                                                                                            <Setter Property="Background"
-                                                                                                    Value="#EEEEEE" />
-                                                                                            <Setter Property="BorderBrush"
-                                                                                                    Value="#CCCCCC" />
-                                                                                            <Setter Property="Opacity"
-                                                                                                    Value="0.58" />
-                                                                                        </DataTrigger>
-                                                                                    </Style.Triggers>
-                                                                                </Style>
-                                                                            </Border.Style>
-
-                                                                            <TextBlock Text="{Binding DisplayText}"
-                                                                                       FontSize="12"
-                                                                                       TextTrimming="CharacterEllipsis"
-                                                                                       TextWrapping="NoWrap">
-
-                                                                                <TextBlock.Style>
-                                                                                    <Style TargetType="TextBlock">
-                                                                                        <Setter Property="Foreground"
-                                                                                                Value="#202020" />
-
-                                                                                        <Style.Triggers>
-                                                                                            <DataTrigger Binding="{Binding IsCompleted}"
-                                                                                                         Value="True">
-                                                                                                <Setter Property="Foreground"
-                                                                                                        Value="#666666" />
-                                                                                                <Setter Property="TextDecorations"
-                                                                                                        Value="Strikethrough" />
-                                                                                            </DataTrigger>
-                                                                                        </Style.Triggers>
-                                                                                    </Style>
-                                                                                </TextBlock.Style>
-                                                                            </TextBlock>
-                                                                        </Border>
-                                                                    </DataTemplate>
-                                                                </ItemsControl.ItemTemplate>
-                                                            </ItemsControl>
                                                         </Grid>
                                                     </Border>
                                                 </DataTemplate>
@@ -364,7 +299,7 @@
 
                                             <ItemsControl.ItemsPanel>
                                                 <ItemsPanelTemplate>
-                                                    <controls:MonthlySpanningSchedulePanel />
+                                                    <controls:CalendarSchedulePanel />
                                                 </ItemsPanelTemplate>
                                             </ItemsControl.ItemsPanel>
 
