@@ -7,11 +7,19 @@ namespace DesktopSchedule.ViewModels;
 
 /// <summary>
 /// 월간 달력 화면의 상태와 일정 편집 동작을 관리합니다.
+/// 현재 표시 월의 6주 × 7일 날짜 구조와 일정 CRUD 상태를 함께 관리합니다.
 /// </summary>
 public class MonthlyCalendarViewModel : ViewModelBase
 {
     // 일정 조회, 생성, 수정, 삭제 기능을 제공하는 Service입니다.
     private readonly ScheduleService _scheduleService;
+
+    // 현재 월간 달력에서 표시하고 있는 월입니다.
+    // 날짜는 항상 해당 월의 1일로 정규화해서 관리합니다.
+    private DateTime _displayMonth;
+
+    // 사용자가 현재 선택한 날짜입니다.
+    private DateTime _selectedDate;
 
     // 현재 편집 중인 기존 일정의 Id입니다.
     // null이면 새 일정을 작성하는 상태입니다.
@@ -57,7 +65,15 @@ public class MonthlyCalendarViewModel : ViewModelBase
     private string _errorMessage = string.Empty;
 
     /// <summary>
+    /// 현재 월간 달력에 표시되는 6개의 주입니다.
+    /// 각 주는 일요일부터 토요일까지 7개의 날짜 셀을 가집니다.
+    /// </summary>
+    public ObservableCollection<MonthlyWeekViewModel> Weeks { get; } = new();
+
+    /// <summary>
     /// 현재 화면에서 표시할 일정 목록입니다.
+    /// 기존 임시 목록 UI와 일정 CRUD 기능을 유지하기 위해 사용합니다.
+    /// 이후 월간 달력 일정 배치 기능에서도 같은 Schedule 데이터를 사용합니다.
     /// </summary>
     public ObservableCollection<ScheduleItem> Schedules { get; } = new();
 
@@ -65,6 +81,40 @@ public class MonthlyCalendarViewModel : ViewModelBase
     /// 일정 알림에서 선택할 수 있는 시작 전 시간 목록입니다.
     /// </summary>
     public IReadOnlyList<int> ReminderMinuteOptions { get; } = new[] { 0, 5, 10, 30, 60, 1440 };
+
+    /// <summary>
+    /// 현재 월간 달력에서 표시하고 있는 월입니다.
+    /// 값은 항상 해당 월의 1일입니다.
+    /// </summary>
+    public DateTime DisplayMonth
+    {
+        get => _displayMonth;
+        private set
+        {
+            var normalizedMonth = new DateTime(value.Year, value.Month, 1);
+
+            if (SetProperty(ref _displayMonth, normalizedMonth))
+            {
+                OnPropertyChanged(nameof(DisplayMonthText));
+            }
+        }
+    }
+
+    /// <summary>
+    /// 월간 달력 상단에 표시할 연도와 월 문자열입니다.
+    /// 예: "2026년 9월"
+    /// </summary>
+    public string DisplayMonthText => $"{DisplayMonth:yyyy년 M월}";
+
+    /// <summary>
+    /// 사용자가 현재 선택한 날짜입니다.
+    /// 시간 정보는 제거하고 날짜만 관리합니다.
+    /// </summary>
+    public DateTime SelectedDate
+    {
+        get => _selectedDate;
+        private set => SetProperty(ref _selectedDate, value.Date);
+    }
 
     /// <summary>
     /// 현재 편집 중인 기존 일정의 Id입니다.
@@ -217,6 +267,21 @@ public class MonthlyCalendarViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// 이전 달로 이동하는 Command입니다.
+    /// </summary>
+    public RelayCommand PreviousMonthCommand { get; }
+
+    /// <summary>
+    /// 오늘이 포함된 현재 달로 돌아가는 Command입니다.
+    /// </summary>
+    public RelayCommand CurrentMonthCommand { get; }
+
+    /// <summary>
+    /// 다음 달로 이동하는 Command입니다.
+    /// </summary>
+    public RelayCommand NextMonthCommand { get; }
+
+    /// <summary>
     /// 새 일정 작성 상태로 편집기를 여는 Command입니다.
     /// </summary>
     public RelayCommand OpenNewScheduleCommand { get; }
@@ -255,6 +320,10 @@ public class MonthlyCalendarViewModel : ViewModelBase
     {
         _scheduleService = scheduleService ?? throw new ArgumentNullException(nameof(scheduleService));
 
+        PreviousMonthCommand = new RelayCommand(_ => MoveMonth(-1));
+        CurrentMonthCommand = new RelayCommand(_ => MoveToCurrentMonth());
+        NextMonthCommand = new RelayCommand(_ => MoveMonth(1));
+
         OpenNewScheduleCommand = new RelayCommand(_ => PrepareNewSchedule());
         SelectScheduleCommand = new RelayCommand(parameter => SelectSchedule(parameter as ScheduleItem));
         SaveScheduleCommand = new RelayCommand(_ => SaveSchedule());
@@ -263,7 +332,34 @@ public class MonthlyCalendarViewModel : ViewModelBase
         MarkAsIncompleteCommand = new RelayCommand(_ => MarkAsIncomplete(), _ => IsEditMode && IsEditingCompleted);
         CancelEditCommand = new RelayCommand(_ => CloseEditor());
 
+        DisplayMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+        SelectedDate = DateTime.Today;
+
+        LoadMonth();
         LoadSchedules();
+    }
+
+    /// <summary>
+    /// 현재 표시 월을 기준으로 월간 달력의 6주 × 7일 날짜 구조를 다시 생성합니다.
+    /// 첫 번째 날짜는 현재 월 1일이 포함된 주의 일요일부터 시작합니다.
+    /// </summary>
+    private void LoadMonth()
+    {
+        Weeks.Clear();
+
+        var firstDayOfMonth = new DateTime(DisplayMonth.Year, DisplayMonth.Month, 1);
+
+        // DayOfWeek에서 Sunday는 0이므로,
+        // 해당 월 1일의 요일 값만큼 뒤로 이동하면 달력의 첫 일요일을 얻을 수 있습니다.
+        var calendarStartDate = firstDayOfMonth.AddDays(-(int)firstDayOfMonth.DayOfWeek);
+
+        for (var weekOffset = 0; weekOffset < 6; weekOffset++)
+        {
+            var weekStartDate = calendarStartDate.AddDays(weekOffset * 7);
+            Weeks.Add(new MonthlyWeekViewModel(weekStartDate, DisplayMonth));
+        }
+
+        UpdateSelectedDateState();
     }
 
     /// <summary>
@@ -278,6 +374,49 @@ public class MonthlyCalendarViewModel : ViewModelBase
         foreach (var schedule in schedules)
         {
             Schedules.Add(schedule);
+        }
+    }
+
+    /// <summary>
+    /// 현재 표시 중인 월을 지정한 개월 수만큼 이동합니다.
+    /// 이전 달은 -1, 다음 달은 1을 전달합니다.
+    /// 이동 후에는 해당 월의 1일을 선택 날짜로 사용합니다.
+    /// </summary>
+    private void MoveMonth(int monthOffset)
+    {
+        DisplayMonth = DisplayMonth.AddMonths(monthOffset);
+        SelectedDate = DisplayMonth;
+
+        IsEditorOpen = false;
+
+        LoadMonth();
+    }
+
+    /// <summary>
+    /// 오늘이 포함된 현재 달로 이동하고 오늘 날짜를 선택합니다.
+    /// </summary>
+    private void MoveToCurrentMonth()
+    {
+        DisplayMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+        SelectedDate = DateTime.Today;
+
+        IsEditorOpen = false;
+
+        LoadMonth();
+    }
+
+    /// <summary>
+    /// 생성된 42개의 날짜 셀 중 현재 선택 날짜와 일치하는 셀만 선택 상태로 표시합니다.
+    /// 선택 날짜가 현재 42일 범위 밖에 있으면 모든 날짜가 선택 해제 상태가 됩니다.
+    /// </summary>
+    private void UpdateSelectedDateState()
+    {
+        foreach (var week in Weeks)
+        {
+            foreach (var day in week.Days)
+            {
+                day.IsSelected = day.Date == SelectedDate;
+            }
         }
     }
 
@@ -332,7 +471,7 @@ public class MonthlyCalendarViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// 완성된 시작/종료 시간을 이용해 새 일정을 추가하거나 기존 일정을 수정합니다.
+    /// 완성된 시작/종료 시간을 이용해 새 일정을 추가하거나 기존 일정에 저장합니다.
     /// </summary>
     private void SaveSchedule(DateTime startAt, DateTime endAt)
     {
@@ -486,10 +625,10 @@ public class MonthlyCalendarViewModel : ViewModelBase
         NewTitle = string.Empty;
         NewDescription = string.Empty;
 
-        NewStartDate = DateTime.Today;
+        NewStartDate = SelectedDate;
         NewStartTime = "09:00";
 
-        NewEndDate = DateTime.Today;
+        NewEndDate = SelectedDate;
         NewEndTime = "10:00";
 
         NewIsAllDay = false;
