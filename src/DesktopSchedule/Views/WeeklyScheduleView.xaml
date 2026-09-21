@@ -3,14 +3,595 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="clr-namespace:DesktopSchedule.Controls"
              mc:Ignorable="d"
-             d:DesignHeight="450"
-             d:DesignWidth="800">
+             d:DesignHeight="600"
+             d:DesignWidth="1000">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    </UserControl.Resources>
 
     <Grid>
-        <TextBlock Text="주간 일정"
-                   HorizontalAlignment="Center"
-                   VerticalAlignment="Center"
-                   FontSize="32" />
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0"
+              Margin="0,0,0,8">
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <Button Grid.Column="0"
+                    Content="&lt;"
+                    Command="{Binding PreviousWeekCommand}"
+                    Width="36"
+                    Height="30" />
+
+            <TextBlock Grid.Column="1"
+                       Text="{Binding WeekRangeText}"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       FontSize="16"
+                       FontWeight="SemiBold" />
+
+            <Button Grid.Column="2"
+                    Content="&gt;"
+                    Command="{Binding NextWeekCommand}"
+                    Width="36"
+                    Height="30" />
+        </Grid>
+
+        <Grid Grid.Row="1"
+              Margin="0,0,0,10">
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Button Grid.Column="1"
+                    Content="이번 주"
+                    Command="{Binding CurrentWeekCommand}"
+                    Padding="12,5" />
+
+            <Button Grid.Column="2"
+                    Content="+ 일정"
+                    Command="{Binding OpenNewScheduleCommand}"
+                    HorizontalAlignment="Right"
+                    Padding="12,5" />
+        </Grid>
+
+        <Grid Grid.Row="2">
+
+            <Grid>
+                <Grid.Style>
+                    <Style TargetType="Grid">
+                        <Setter Property="Visibility"
+                                Value="Visible" />
+
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsEditorOpen}"
+                                         Value="True">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Grid.Style>
+
+                <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Auto">
+
+                    <Grid Width="1036">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <Grid Grid.Row="0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="56" />
+                                <ColumnDefinition Width="980" />
+                            </Grid.ColumnDefinitions>
+
+                            <Border Grid.Column="0"
+                                    BorderBrush="LightGray"
+                                    BorderThickness="0,0,1,1" />
+
+                            <ItemsControl Grid.Column="1"
+                                          ItemsSource="{Binding Days}">
+
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <UniformGrid Columns="7" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border BorderBrush="LightGray"
+                                                BorderThickness="0,0,1,1">
+
+                                            <StackPanel>
+
+                                                <Button Command="{Binding DataContext.SelectDateCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}"
+                                                        Height="38"
+                                                        BorderThickness="0,0,0,1"
+                                                        BorderBrush="LightGray"
+                                                        Padding="4">
+
+                                                    <Button.Style>
+                                                        <Style TargetType="Button">
+                                                            <Setter Property="Background"
+                                                                    Value="Transparent" />
+
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsToday}"
+                                                                             Value="True">
+                                                                    <Setter Property="FontWeight"
+                                                                            Value="Bold" />
+                                                                </DataTrigger>
+
+                                                                <DataTrigger Binding="{Binding IsSelected}"
+                                                                             Value="True">
+                                                                    <Setter Property="Background"
+                                                                            Value="LightGray" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+
+                                                    <StackPanel Orientation="Horizontal"
+                                                                HorizontalAlignment="Center">
+
+                                                        <TextBlock Text="{Binding DayName}"
+                                                                   FontSize="15" />
+
+                                                        <TextBlock Text="{Binding DayText}"
+                                                                   Margin="6,0,0,0"
+                                                                   FontSize="15" />
+                                                    </StackPanel>
+                                                </Button>
+
+                                                <ItemsControl ItemsSource="{Binding AllDaySchedules}"
+                                                              Margin="2,1,2,2">
+
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Button Height="20"
+                                                                    Command="{Binding DataContext.SelectScheduleCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                    CommandParameter="{Binding}"
+                                                                    HorizontalContentAlignment="Stretch"
+                                                                    Padding="3,0"
+                                                                    Margin="0,1,0,0"
+                                                                    ToolTip="하루 종일">
+
+                                                                <TextBlock Text="{Binding Title}"
+                                                                           FontSize="11"
+                                                                           FontWeight="SemiBold"
+                                                                           TextTrimming="CharacterEllipsis"
+                                                                           TextWrapping="NoWrap" />
+                                                            </Button>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Grid>
+
+                        <Grid Grid.Row="1"
+                              Height="{Binding TimelineDisplayHeight}">
+
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="56" />
+                                <ColumnDefinition Width="980" />
+                            </Grid.ColumnDefinitions>
+
+                            <ItemsControl Grid.Column="0"
+                                          ItemsSource="{Binding TimelineSegments}">
+
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Height="{Binding Height}">
+
+                                            <Grid>
+                                                <Grid.Style>
+                                                    <Style TargetType="Grid">
+                                                        <Setter Property="Visibility"
+                                                                Value="Visible" />
+
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsCompressed}"
+                                                                         Value="True">
+                                                                <Setter Property="Visibility"
+                                                                        Value="Collapsed" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Grid.Style>
+
+                                                <ItemsControl ItemsSource="{Binding Hours}">
+
+                                                    <ItemsControl.ItemsPanel>
+                                                        <ItemsPanelTemplate>
+                                                            <StackPanel />
+                                                        </ItemsPanelTemplate>
+                                                    </ItemsControl.ItemsPanel>
+
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Grid Height="{Binding DataContext.HourHeight, RelativeSource={RelativeSource AncestorType=UserControl}}">
+
+                                                                <TextBlock Text="{Binding StringFormat={}{0:00}:00}"
+                                                                           HorizontalAlignment="Right"
+                                                                           VerticalAlignment="Top"
+                                                                           Margin="0,-7,6,0"
+                                                                           FontSize="11" />
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </Grid>
+
+                                            <TextBlock Text="···"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       FontSize="11">
+
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Visibility"
+                                                                Value="Collapsed" />
+
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsCompressed}"
+                                                                         Value="True">
+                                                                <Setter Property="Visibility"
+                                                                        Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <Grid x:Name="TimelineScheduleArea"
+                                  Grid.Column="1"
+                                  Background="Transparent"
+                                  AllowDrop="True"
+                                  DragOver="TimelineScheduleArea_DragOver"
+                                  Drop="TimelineScheduleArea_Drop">
+
+                                <ItemsControl ItemsSource="{Binding TimelineSegments}">
+
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Height="{Binding Height}">
+
+                                                <ItemsControl ItemsSource="{Binding Hours}">
+
+                                                    <ItemsControl.Style>
+                                                        <Style TargetType="ItemsControl">
+                                                            <Setter Property="Visibility"
+                                                                    Value="Visible" />
+
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsCompressed}"
+                                                                             Value="True">
+                                                                    <Setter Property="Visibility"
+                                                                            Value="Collapsed" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </ItemsControl.Style>
+
+                                                    <ItemsControl.ItemsPanel>
+                                                        <ItemsPanelTemplate>
+                                                            <StackPanel />
+                                                        </ItemsPanelTemplate>
+                                                    </ItemsControl.ItemsPanel>
+
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <ItemsControl Height="{Binding DataContext.HourHeight, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                          ItemsSource="{Binding DataContext.Days, RelativeSource={RelativeSource AncestorType=UserControl}}">
+
+                                                                <ItemsControl.ItemsPanel>
+                                                                    <ItemsPanelTemplate>
+                                                                        <UniformGrid Columns="7" />
+                                                                    </ItemsPanelTemplate>
+                                                                </ItemsControl.ItemsPanel>
+
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate>
+                                                                        <Border BorderBrush="LightGray"
+                                                                                BorderThickness="0,0,1,1" />
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+
+                                                <Border BorderBrush="LightGray"
+                                                        BorderThickness="0,0,0,1">
+
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Visibility"
+                                                                    Value="Collapsed" />
+
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsCompressed}"
+                                                                             Value="True">
+                                                                    <Setter Property="Visibility"
+                                                                            Value="Visible" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+
+                                                    <TextBlock Text="{Binding RangeText, StringFormat={}{0}  ·  일정 없음}"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center"
+                                                               FontSize="11" />
+                                                </Border>
+
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <ItemsControl ItemsSource="{Binding Days}"
+                                              IsHitTestVisible="True">
+
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <UniformGrid Columns="7" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <ItemsControl Width="140"
+                                                          Height="{Binding DataContext.TimelineDisplayHeight, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                          ItemsSource="{Binding TimedSchedules}">
+
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <Canvas Width="140"
+                                                                Height="{Binding DataContext.TimelineDisplayHeight, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+
+                                                <ItemsControl.ItemContainerStyle>
+                                                    <Style TargetType="ContentPresenter">
+                                                        <Setter Property="Canvas.Top"
+                                                                Value="{Binding Top}" />
+
+                                                        <Setter Property="Canvas.Left"
+                                                                Value="{Binding Left}" />
+                                                    </Style>
+                                                </ItemsControl.ItemContainerStyle>
+
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Button Width="{Binding Width}"
+                                                                Height="{Binding Height}"
+                                                                Command="{Binding DataContext.SelectScheduleCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                CommandParameter="{Binding Schedule}"
+                                                                HorizontalContentAlignment="Stretch"
+                                                                VerticalContentAlignment="Center"
+                                                                Padding="3,0"
+                                                                ToolTip="{Binding TimeText}"
+                                                                PreviewMouseLeftButtonDown="ScheduleButton_PreviewMouseLeftButtonDown"
+                                                                PreviewMouseMove="ScheduleButton_PreviewMouseMove">
+
+                                                            <TextBlock Text="{Binding Title}"
+                                                                       FontWeight="SemiBold"
+                                                                       TextWrapping="NoWrap"
+                                                                       TextTrimming="CharacterEllipsis" />
+                                                        </Button>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+
+                                            </ItemsControl>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                            </Grid>
+                        </Grid>
+                    </Grid>
+                </ScrollViewer>
+            </Grid>
+
+            <Border BorderBrush="LightGray"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Padding="12"
+                    Visibility="{Binding IsEditorOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
+
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+
+                    <StackPanel>
+
+                        <TextBlock Text="{Binding EditorTitle}"
+                                   FontSize="20"
+                                   FontWeight="SemiBold"
+                                   Margin="0,0,0,12" />
+
+                        <TextBlock Text="제목"
+                                   Margin="0,0,0,4" />
+
+                        <TextBox Text="{Binding NewTitle, UpdateSourceTrigger=PropertyChanged}"
+                                 Padding="6"
+                                 Margin="0,0,0,10" />
+
+                        <TextBlock Text="설명"
+                                   Margin="0,0,0,4" />
+
+                        <TextBox Text="{Binding NewDescription, UpdateSourceTrigger=PropertyChanged}"
+                                 Height="70"
+                                 AcceptsReturn="True"
+                                 TextWrapping="Wrap"
+                                 VerticalScrollBarVisibility="Auto"
+                                 Padding="6"
+                                 Margin="0,0,0,10" />
+
+                        <TextBlock Text="시작"
+                                   Margin="0,0,0,4" />
+
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="90" />
+                            </Grid.ColumnDefinitions>
+
+                            <controls:ScheduleDatePicker Grid.Column="0"
+                                                         SelectedDate="{Binding NewStartDate}" />
+
+                            <TextBox Grid.Column="2"
+                                     Text="{Binding NewStartTime, UpdateSourceTrigger=PropertyChanged}"
+                                     Padding="6" />
+                        </Grid>
+
+                        <TextBlock Text="종료"
+                                   Margin="0,0,0,4" />
+
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="90" />
+                            </Grid.ColumnDefinitions>
+
+                            <controls:ScheduleDatePicker Grid.Column="0"
+                                                         SelectedDate="{Binding NewEndDate}" />
+
+                            <TextBox Grid.Column="2"
+                                     Text="{Binding NewEndTime, UpdateSourceTrigger=PropertyChanged}"
+                                     Padding="6" />
+                        </Grid>
+
+                        <CheckBox Content="하루 종일"
+                                  IsChecked="{Binding NewIsAllDay}"
+                                  Margin="0,0,0,10" />
+
+                        <CheckBox Content="알림 사용"
+                                  IsChecked="{Binding NewIsReminderEnabled}"
+                                  Margin="0,0,0,8" />
+
+                        <StackPanel Orientation="Horizontal"
+                                    Margin="0,0,0,10">
+
+                            <ComboBox ItemsSource="{Binding ReminderMinuteOptions}"
+                                      SelectedItem="{Binding NewReminderMinutesBefore}"
+                                      IsEnabled="{Binding NewIsReminderEnabled}"
+                                      Width="100" />
+
+                            <TextBlock Text="분 전 알림"
+                                       VerticalAlignment="Center"
+                                       Margin="8,0,0,0" />
+                        </StackPanel>
+
+                        <TextBlock Text="{Binding ErrorMessage}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,10" />
+
+                        <WrapPanel HorizontalAlignment="Right">
+
+                            <Button Content="완료"
+                                    Command="{Binding MarkAsCompletedCommand}"
+                                    Padding="12,6"
+                                    Margin="0,0,6,0">
+
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+
+                                        <Style.Triggers>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsEditMode}"
+                                                               Value="True" />
+                                                    <Condition Binding="{Binding IsEditingCompleted}"
+                                                               Value="False" />
+                                                </MultiDataTrigger.Conditions>
+
+                                                <Setter Property="Visibility"
+                                                        Value="Visible" />
+                                            </MultiDataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+
+                            <Button Content="삭제"
+                                    Command="{Binding DeleteScheduleCommand}"
+                                    Padding="12,6"
+                                    Margin="0,0,6,0">
+
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsEditMode}"
+                                                         Value="True">
+                                                <Setter Property="Visibility"
+                                                        Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+
+                            <Button Content="취소"
+                                    Command="{Binding CancelEditCommand}"
+                                    Padding="12,6"
+                                    Margin="0,0,6,0" />
+
+                            <Button Content="저장"
+                                    Command="{Binding SaveScheduleCommand}"
+                                    Padding="12,6" />
+
+                        </WrapPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
     </Grid>
 </UserControl>

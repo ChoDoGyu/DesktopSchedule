@@ -81,14 +81,10 @@ public class MainWindowViewModel : ViewModelBase
 
     public MainWindowViewModel(ScheduleService scheduleService)
     {
-        // 일정 관련 화면에서 사용할 Service를 전달받아 보관합니다.
         _scheduleService = scheduleService ?? throw new ArgumentNullException(nameof(scheduleService));
 
-        // 프로그램을 처음 실행했을 때 월간 달력 화면을 기본 화면으로 사용합니다.
         _currentViewModel = new MonthlyCalendarViewModel(_scheduleService);
 
-        // 각 Command가 실행되었을 때 CurrentViewModel을
-        // 해당 화면의 ViewModel로 변경하도록 연결합니다.
         ShowMonthlyCalendarCommand = new RelayCommand(_ => ShowMonthlyCalendar());
         ShowWeeklyScheduleCommand = new RelayCommand(_ => ShowWeeklySchedule());
         ShowTodoCommand = new RelayCommand(_ => ShowTodo());
@@ -108,7 +104,7 @@ public class MainWindowViewModel : ViewModelBase
     /// </summary>
     private void ShowWeeklySchedule()
     {
-        CurrentViewModel = new WeeklyScheduleViewModel();
+        CurrentViewModel = new WeeklyScheduleViewModel(_scheduleService);
     }
 
     /// <summary>

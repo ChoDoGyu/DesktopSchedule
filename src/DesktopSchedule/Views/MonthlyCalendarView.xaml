@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="clr-namespace:DesktopSchedule.Controls"
              mc:Ignorable="d"
              d:DesignHeight="600"
              d:DesignWidth="420">
@@ -37,6 +38,7 @@
         </Grid>
 
         <Grid Grid.Row="1">
+
             <Grid>
                 <Grid.Style>
                     <Style TargetType="Grid">
@@ -164,8 +166,8 @@
                                 <ColumnDefinition Width="90" />
                             </Grid.ColumnDefinitions>
 
-                            <DatePicker Grid.Column="0"
-                                        SelectedDate="{Binding NewStartDate}" />
+                            <controls:ScheduleDatePicker Grid.Column="0"
+                                                         SelectedDate="{Binding NewStartDate}" />
 
                             <TextBox Grid.Column="2"
                                      Text="{Binding NewStartTime, UpdateSourceTrigger=PropertyChanged}"
@@ -182,8 +184,8 @@
                                 <ColumnDefinition Width="90" />
                             </Grid.ColumnDefinitions>
 
-                            <DatePicker Grid.Column="0"
-                                        SelectedDate="{Binding NewEndDate}" />
+                            <controls:ScheduleDatePicker Grid.Column="0"
+                                                         SelectedDate="{Binding NewEndDate}" />
 
                             <TextBox Grid.Column="2"
                                      Text="{Binding NewEndTime, UpdateSourceTrigger=PropertyChanged}"
@@ -216,6 +218,7 @@
                                    Margin="0,0,0,10" />
 
                         <WrapPanel HorizontalAlignment="Right">
+
                             <Button Content="완료"
                                     Command="{Binding MarkAsCompletedCommand}"
                                     Padding="12,6"
