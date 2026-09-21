@@ -11,7 +11,7 @@ namespace DesktopSchedule.ViewModels;
 /// </summary>
 public class MonthlyCalendarViewModel : ViewModelBase
 {
-    // 일정 조회, 생성, 수정, 삭제 기능을 제공하는 Service입니다.
+    // 일정 조회, 생성, 수정, 삭제, 이동 기능을 제공하는 Service입니다.
     private readonly ScheduleService _scheduleService;
 
     // 현재 월간 달력에서 표시하고 있는 월입니다.
@@ -386,6 +386,68 @@ public class MonthlyCalendarViewModel : ViewModelBase
 
         LoadSingleDaySchedules(schedules);
         LoadSpanningSchedules(schedules);
+    }
+
+    /// <summary>
+    /// Drag한 일정을 지정한 월간 날짜로 이동합니다.
+    /// 사용자가 실제로 잡은 화면상의 날짜와 Drop 날짜의 차이를 계산한 뒤,
+    /// 일정 전체를 같은 일수만큼 이동합니다.
+    /// </summary>
+    public void MoveScheduleByDrop(ScheduleItem schedule, DateTime displayDate, MonthlyDayViewModel targetDay)
+    {
+        ArgumentNullException.ThrowIfNull(schedule);
+        ArgumentNullException.ThrowIfNull(targetDay);
+
+        // 사용자가 잡은 일정 조각의 날짜와 Drop한 날짜 사이의 차이를 계산합니다.
+        // 여러 날짜 일정의 중간 주에 표시된 조각을 잡더라도
+        // 그 조각을 기준으로 전체 일정이 자연스럽게 같은 일수만큼 이동합니다.
+        var dayOffset = (targetDay.Date - displayDate.Date).Days;
+
+        // 같은 날짜에 다시 놓은 경우 DB를 불필요하게 갱신하지 않습니다.
+        if (dayOffset == 0)
+        {
+            SetDropTarget(null);
+            return;
+        }
+
+        // 기존 일정의 시간은 그대로 유지하고 날짜만 같은 일수만큼 이동합니다.
+        // 실제 EndAt 이동은 ScheduleService.Move()가 기존 duration을 이용해 처리합니다.
+        var newStartAt = schedule.StartAt.AddDays(dayOffset);
+
+        try
+        {
+            _scheduleService.Move(schedule.Id, newStartAt);
+
+            // Drop한 날짜를 새로운 선택 날짜로 사용합니다.
+            SelectedDate = targetDay.Date;
+            UpdateSelectedDateState();
+
+            ErrorMessage = string.Empty;
+
+            // 이동된 일정이 단일 일정인지 여러 날짜 일정인지 다시 판단해야 하므로
+            // 월간 일정 배치 전체를 다시 구성합니다.
+            LoadSchedules();
+        }
+        catch (KeyNotFoundException exception)
+        {
+            ErrorMessage = exception.Message;
+        }
+    }
+
+    /// <summary>
+    /// Drag 중 현재 Drop 대상으로 판단된 날짜 하나만 강조합니다.
+    /// 주간 화면의 SetDropTarget과 동일하게 모든 날짜를 순회하면서
+    /// 전달된 날짜만 IsDropTarget 상태로 설정합니다.
+    /// </summary>
+    public void SetDropTarget(MonthlyDayViewModel? targetDay)
+    {
+        foreach (var week in Weeks)
+        {
+            foreach (var day in week.Days)
+            {
+                day.IsDropTarget = day == targetDay;
+            }
+        }
     }
 
     /// <summary>
