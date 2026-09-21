@@ -1,8 +1,8 @@
-﻿using System.Collections.ObjectModel; // ObservableCollection을 사용하기 위해 필요합니다.
-using DesktopSchedule.Commands; // RelayCommand를 사용하기 위해 필요합니다.
-using DesktopSchedule.Models; // ScheduleItem을 사용하기 위해 필요합니다.
-using DesktopSchedule.Services; // ScheduleService를 생성자에서 전달받기 위해 필요합니다.
-using DesktopSchedule.Utilities; // 주간/월간 공통 일정 날짜 및 배치 계산을 사용하기 위해 필요합니다.
+﻿using System.Collections.ObjectModel;
+using DesktopSchedule.Commands;
+using DesktopSchedule.Models;
+using DesktopSchedule.Services;
+using DesktopSchedule.Utilities;
 
 namespace DesktopSchedule.ViewModels;
 
@@ -125,8 +125,6 @@ public class MonthlyCalendarViewModel : ScheduleEditorViewModelBase
 
         var firstDayOfMonth = new DateTime(DisplayMonth.Year, DisplayMonth.Month, 1);
 
-        // DayOfWeek에서 Sunday는 0이므로
-        // 해당 월 1일의 요일 값만큼 뒤로 이동하면 첫 일요일을 얻을 수 있습니다.
         var calendarStartDate = firstDayOfMonth.AddDays(-(int)firstDayOfMonth.DayOfWeek);
 
         for (var weekOffset = 0; weekOffset < 6; weekOffset++)
@@ -209,7 +207,7 @@ public class MonthlyCalendarViewModel : ScheduleEditorViewModelBase
     }
 
     /// <summary>
-    /// 현재 생성된 월간 달력의 일정 표시 데이터를 초기화합니다.
+    /// 현재 생성된 월간 달력의 일정 Row 배치를 초기화합니다.
     /// </summary>
     private void ClearMonthlyScheduleLayout()
     {
@@ -217,11 +215,6 @@ public class MonthlyCalendarViewModel : ScheduleEditorViewModelBase
         {
             week.SpanningSchedules.Clear();
             week.UpdateSpanningRowCount(0);
-
-            foreach (var day in week.Days)
-            {
-                day.Schedules.Clear();
-            }
         }
     }
 
@@ -243,7 +236,9 @@ public class MonthlyCalendarViewModel : ScheduleEditorViewModelBase
     /// </summary>
     private static void LoadScheduleLayoutForWeek(MonthlyWeekViewModel week, IReadOnlyList<ScheduleItem> schedules)
     {
-        var layout = ScheduleCalendarCalculator.CreateWeekLayout(schedules, week.WeekStartDate);
+        var layout = ScheduleCalendarCalculator.CreateWeekLayout(
+            schedules,
+            week.WeekStartDate);
 
         foreach (var placement in layout.Placements)
         {
@@ -280,7 +275,11 @@ public class MonthlyCalendarViewModel : ScheduleEditorViewModelBase
     /// </summary>
     private void MoveToCurrentMonth()
     {
-        DisplayMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+        DisplayMonth = new DateTime(
+            DateTime.Today.Year,
+            DateTime.Today.Month,
+            1);
+
         SelectedDate = DateTime.Today;
 
         CloseEditor();

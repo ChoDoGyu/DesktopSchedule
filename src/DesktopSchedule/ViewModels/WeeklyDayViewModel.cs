@@ -1,9 +1,7 @@
-﻿using System.Collections.ObjectModel;
-
-namespace DesktopSchedule.ViewModels;
+﻿namespace DesktopSchedule.ViewModels;
 
 /// <summary>
-/// 주간 화면에서 하루에 해당하는 날짜와 일정 목록을 관리합니다.
+/// 주간 화면에서 하루에 해당하는 날짜와 화면 상태를 관리합니다.
 /// </summary>
 public class WeeklyDayViewModel : ViewModelBase
 {
@@ -57,11 +55,6 @@ public class WeeklyDayViewModel : ViewModelBase
         get => _isDropTarget;
         set => SetProperty(ref _isDropTarget, value);
     }
-
-    /// <summary>
-    /// 현재 날짜에 표시할 일정 카드 목록입니다.
-    /// </summary>
-    public ObservableCollection<WeeklyScheduleCardViewModel> Schedules { get; } = new();
 
     public WeeklyDayViewModel(DateTime date)
     {

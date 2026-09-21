@@ -1,180 +1,70 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using DesktopSchedule.Models;
+using DesktopSchedule.Controls;
 using DesktopSchedule.ViewModels;
 
 namespace DesktopSchedule.Views;
 
 /// <summary>
 /// 주간 일정 화면의 View입니다.
-/// 일정 카드의 클릭과 내부 Drag 동작을 구분하여 처리합니다.
+/// 일정 클릭과 Drag 입력을 구분하며,
+/// 공통 ScheduleDragController를 사용해 Drag 상태와 화면 처리를 관리합니다.
+/// 주간 달력의 Drop 대상 날짜 판정과 실제 일정 이동은 이 View가 담당합니다.
 /// </summary>
 public partial class WeeklyScheduleView : UserControl
 {
-    private Point _dragStartPoint;
-    private Point _dragPointerOffset;
-
-    private ScheduleItem? _dragSchedule;
-    private DateTime _dragDisplayDate;
-    private string _dragDisplayText = string.Empty;
-
-    private Button? _dragSourceButton;
-
-    private bool _isDragging;
-
-    private double _dragSourceOriginalOpacity = 1.0;
+    // 주간과 월간에서 공통으로 사용하는 일정 Drag 상태 및 동작을 관리합니다.
+    private readonly ScheduleDragController _dragController;
 
     public WeeklyScheduleView()
     {
         InitializeComponent();
 
+        _dragController = new ScheduleDragController(
+            DragSurface,
+            DragPreview,
+            ClearDropTarget);
+
         Unloaded += WeeklyScheduleView_Unloaded;
     }
 
     /// <summary>
-    /// 단일 날짜 일정 카드 또는 여러 날짜 연결 막대를 클릭했을 때
-    /// 공통 Drag 후보 상태를 준비합니다.
+    /// 일정 카드를 눌렀을 때 공통 Drag Controller에
+    /// 클릭 또는 Drag 후보 상태를 준비하도록 요청합니다.
     /// </summary>
     private void ScheduleButton_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (sender is not Button button)
+        if (sender is not FrameworkElement element)
         {
             return;
         }
 
-        if (!TryGetScheduleDragData(
-                button.DataContext,
-                out var schedule,
-                out var displayDate,
-                out var displayText))
+        if (!_dragController.TryPrepareCandidate(
+                element,
+                element.DataContext,
+                e))
         {
             return;
         }
-
-        _dragStartPoint = e.GetPosition(DragSurface);
-        _dragPointerOffset = e.GetPosition(button);
-
-        _dragSchedule = schedule;
-        _dragDisplayDate = displayDate;
-        _dragDisplayText = displayText;
-        _dragSourceButton = button;
 
         e.Handled = true;
     }
 
     /// <summary>
-    /// 화면용 ViewModel에서 Drag에 필요한 공통 일정 정보를 추출합니다.
-    /// </summary>
-    private static bool TryGetScheduleDragData(object? dataContext, out ScheduleItem schedule, out DateTime displayDate, out string displayText)
-    {
-        if (dataContext is WeeklyScheduleCardViewModel scheduleCard)
-        {
-            schedule = scheduleCard.Schedule;
-            displayDate = scheduleCard.DisplayDate;
-            displayText = scheduleCard.DisplayText;
-
-            return true;
-        }
-
-        if (dataContext is WeeklySpanningScheduleViewModel spanningSchedule)
-        {
-            schedule = spanningSchedule.Schedule;
-            displayDate = spanningSchedule.DisplayDate;
-            displayText = spanningSchedule.DisplayText;
-
-            return true;
-        }
-
-        schedule = null!;
-        displayDate = default;
-        displayText = string.Empty;
-
-        return false;
-    }
-
-    /// <summary>
-    /// 주간 화면에서 마우스가 움직일 때 Drag 시작 여부를 판정하고
-    /// 실제 Drag 중이면 미리보기와 대상 날짜를 갱신합니다.
+    /// 마우스 이동을 공통 Drag Controller에 전달합니다.
+    /// 실제 Drag가 시작되면 Controller가 미리보기를 이동하고,
+    /// 현재 마우스 위치를 이용한 Drop 대상 계산만 주간 View가 담당합니다.
     /// </summary>
     private void DragSurface_PreviewMouseMove(object sender, MouseEventArgs e)
     {
-        if (_dragSchedule is null || _dragSourceButton is null)
+        if (_dragController.HandleMouseMove(
+                e,
+                WeekCalendarArea,
+                UpdateDropTarget))
         {
-            return;
+            e.Handled = true;
         }
-
-        if (e.LeftButton != MouseButtonState.Pressed)
-        {
-            if (_isDragging)
-            {
-                CancelDrag();
-            }
-            else
-            {
-                ClearDragCandidate();
-            }
-
-            return;
-        }
-
-        var currentPosition = e.GetPosition(DragSurface);
-
-        if (!_isDragging)
-        {
-            var horizontalDistance = Math.Abs(currentPosition.X - _dragStartPoint.X);
-            var verticalDistance = Math.Abs(currentPosition.Y - _dragStartPoint.Y);
-
-            if (horizontalDistance < SystemParameters.MinimumHorizontalDragDistance &&
-                verticalDistance < SystemParameters.MinimumVerticalDragDistance)
-            {
-                return;
-            }
-
-            if (!BeginDrag(currentPosition))
-            {
-                return;
-            }
-        }
-
-        DragPreview.Move(currentPosition, _dragPointerOffset);
-
-        UpdateDropTarget(e.GetPosition(WeekCalendarArea));
-
-        e.Handled = true;
-    }
-
-    /// <summary>
-    /// 일정 카드를 실제 Drag 상태로 전환합니다.
-    /// </summary>
-    private bool BeginDrag(Point currentPosition)
-    {
-        if (_dragSchedule is null || _dragSourceButton is null)
-        {
-            return false;
-        }
-
-        if (!Mouse.Capture(DragSurface, CaptureMode.SubTree))
-        {
-            ClearDragCandidate();
-            return false;
-        }
-
-        _isDragging = true;
-
-        _dragSourceOriginalOpacity = _dragSourceButton.Opacity;
-        _dragSourceButton.Opacity = 0.4;
-
-        DragPreview.Show(
-            _dragDisplayText,
-            _dragSourceButton.ActualWidth,
-            _dragSourceButton.ActualHeight);
-
-        DragPreview.Move(currentPosition, _dragPointerOffset);
-
-        Mouse.OverrideCursor = Cursors.SizeAll;
-
-        return true;
     }
 
     /// <summary>
@@ -217,7 +107,8 @@ public partial class WeeklyScheduleView : UserControl
         var dayWidth = WeekCalendarArea.ActualWidth / 7.0;
         var dayIndex = (int)(calendarPosition.X / dayWidth);
 
-        if (dayIndex < 0 || dayIndex >= viewModel.Days.Count)
+        if (dayIndex < 0 ||
+            dayIndex >= viewModel.Days.Count)
         {
             return null;
         }
@@ -226,39 +117,47 @@ public partial class WeeklyScheduleView : UserControl
     }
 
     /// <summary>
-    /// MouseUp 시 단순 클릭인지 Drag인지 구분합니다.
+    /// MouseUp 시 공통 Drag Controller에서
+    /// 단순 클릭이었는지 실제 Drag였는지를 확인합니다.
+    /// 클릭이면 일정 편집기를 열고,
+    /// Drag였다면 현재 Drop 대상 날짜로 일정을 이동합니다.
     /// </summary>
     private void DragSurface_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
     {
-        if (!_isDragging)
+        if (!_dragController.HasCandidate)
         {
-            var schedule = _dragSchedule;
+            return;
+        }
 
-            ClearDragCandidate();
+        // 실제 Drag 중에는 Controller가 상태를 정리하기 전에
+        // 현재 마우스 위치의 Drop 대상 날짜를 먼저 계산합니다.
+        var targetDay = _dragController.IsDragging
+            ? GetTargetDay(e.GetPosition(WeekCalendarArea))
+            : null;
 
-            if (schedule is not null &&
-                DataContext is WeeklyScheduleViewModel viewModel)
+        if (!_dragController.TryCompleteRelease(out var result))
+        {
+            return;
+        }
+
+        if (!result.WasDragging)
+        {
+            if (DataContext is WeeklyScheduleViewModel viewModel &&
+                viewModel.SelectScheduleCommand.CanExecute(result.Schedule))
             {
-                viewModel.SelectScheduleCommand.Execute(schedule);
+                viewModel.SelectScheduleCommand.Execute(result.Schedule);
                 e.Handled = true;
             }
 
             return;
         }
 
-        var draggedSchedule = _dragSchedule;
-        var draggedDisplayDate = _dragDisplayDate;
-        var targetDay = GetTargetDay(e.GetPosition(WeekCalendarArea));
-
-        EndDragVisuals();
-
-        if (draggedSchedule is not null &&
-            targetDay is not null &&
+        if (targetDay is not null &&
             DataContext is WeeklyScheduleViewModel currentViewModel)
         {
             currentViewModel.MoveScheduleByDrop(
-                draggedSchedule,
-                draggedDisplayDate,
+                result.Schedule,
+                result.DisplayDate,
                 targetDay);
         }
 
@@ -266,95 +165,52 @@ public partial class WeeklyScheduleView : UserControl
     }
 
     /// <summary>
-    /// Escape를 누르면 Drag를 취소합니다.
+    /// Escape를 누르면 현재 Drag를 취소합니다.
+    /// 실제 Drag 상태 정리는 공통 Controller가 담당합니다.
     /// </summary>
     private void DragSurface_PreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (!_isDragging || e.Key != Key.Escape)
+        if (!_dragController.IsDragging ||
+            e.Key != Key.Escape)
         {
             return;
         }
 
-        CancelDrag();
+        _dragController.Cancel();
 
         e.Handled = true;
     }
 
     /// <summary>
-    /// 예기치 않게 Mouse Capture가 해제되면 Drag 상태를 정리합니다.
+    /// 예기치 않게 Mouse Capture가 해제되면
+    /// 공통 Controller를 통해 Drag 상태를 정리합니다.
     /// </summary>
     private void DragSurface_LostMouseCapture(object sender, MouseEventArgs e)
     {
-        if (_isDragging && Mouse.Captured != DragSurface)
+        if (_dragController.IsDragging &&
+            Mouse.Captured != DragSurface)
         {
-            CancelDrag();
+            _dragController.Cancel();
         }
     }
 
     /// <summary>
-    /// 화면이 제거될 때 남아 있는 Drag 상태를 정리합니다.
+    /// 주간 화면이 제거될 때 남아 있는 Drag 관련 상태를 정리합니다.
     /// </summary>
     private void WeeklyScheduleView_Unloaded(object sender, RoutedEventArgs e)
     {
-        if (_isDragging)
-        {
-            EndDragVisuals();
-            return;
-        }
+        _dragController.Cleanup();
+    }
 
-        DragPreview.Hide();
-
+    /// <summary>
+    /// 주간 화면에 표시된 모든 Drop 대상 강조를 제거합니다.
+    /// 공통 Drag Controller가 Drag 종료 또는 취소 시 호출합니다.
+    /// </summary>
+    private void ClearDropTarget()
+    {
         if (DataContext is WeeklyScheduleViewModel viewModel)
         {
             viewModel.SetDropTarget(null);
         }
-
-        ClearDragCandidate();
-    }
-
-    private void CancelDrag()
-    {
-        EndDragVisuals();
-    }
-
-    /// <summary>
-    /// Drag와 관련된 모든 화면 상태를 원래대로 되돌립니다.
-    /// </summary>
-    private void EndDragVisuals()
-    {
-        DragPreview.Hide();
-
-        if (_dragSourceButton is not null)
-        {
-            _dragSourceButton.Opacity = _dragSourceOriginalOpacity;
-            VisualStateManager.GoToState(_dragSourceButton, "Normal", false);
-        }
-
-        if (DataContext is WeeklyScheduleViewModel viewModel)
-        {
-            viewModel.SetDropTarget(null);
-        }
-
-        Mouse.OverrideCursor = null;
-
-        _isDragging = false;
-
-        if (Mouse.Captured == DragSurface)
-        {
-            Mouse.Capture(null);
-        }
-
-        ClearDragCandidate();
-    }
-
-    /// <summary>
-    /// 클릭 또는 Drag 후보 정보를 초기화합니다.
-    /// </summary>
-    private void ClearDragCandidate()
-    {
-        _dragSchedule = null;
-        _dragDisplayDate = default;
-        _dragDisplayText = string.Empty;
-        _dragSourceButton = null;
     }
 }

@@ -1,11 +1,9 @@
-﻿using System.Collections.ObjectModel;
-
-namespace DesktopSchedule.ViewModels;
+﻿namespace DesktopSchedule.ViewModels;
 
 /// <summary>
 /// 월간 달력에서 날짜 한 칸의 상태를 관리합니다.
 /// 날짜 자체의 정보와 표시 월과의 관계, 오늘 여부,
-/// 선택 상태, Drag Drop 상태 및 해당 날짜의 일정을 제공합니다.
+/// 선택 상태 및 Drag Drop 상태를 제공합니다.
 /// </summary>
 public class MonthlyDayViewModel : ViewModelBase
 {
@@ -23,7 +21,6 @@ public class MonthlyDayViewModel : ViewModelBase
 
     /// <summary>
     /// 이 날짜가 현재 표시 월보다 이전 달에 속하는지 여부입니다.
-    /// 월간 달력의 앞쪽 영역을 채우는 날짜를 구분할 때 사용합니다.
     /// </summary>
     public bool IsPreviousMonth { get; }
 
@@ -34,7 +31,6 @@ public class MonthlyDayViewModel : ViewModelBase
 
     /// <summary>
     /// 이 날짜가 현재 표시 월보다 다음 달에 속하는지 여부입니다.
-    /// 월간 달력의 뒤쪽 영역을 채우는 날짜를 구분할 때 사용합니다.
     /// </summary>
     public bool IsNextMonth { get; }
 
@@ -45,13 +41,11 @@ public class MonthlyDayViewModel : ViewModelBase
 
     /// <summary>
     /// 이 날짜가 일요일인지 여부입니다.
-    /// 월간 달력에서 일요일 표시 스타일을 구분할 때 사용합니다.
     /// </summary>
     public bool IsSunday => Date.DayOfWeek == DayOfWeek.Sunday;
 
     /// <summary>
     /// 이 날짜가 토요일인지 여부입니다.
-    /// 월간 달력에서 토요일 표시 스타일을 구분할 때 사용합니다.
     /// </summary>
     public bool IsSaturday => Date.DayOfWeek == DayOfWeek.Saturday;
 
@@ -74,7 +68,6 @@ public class MonthlyDayViewModel : ViewModelBase
 
     /// <summary>
     /// 사용자가 현재 선택한 날짜인지 여부입니다.
-    /// 선택된 날짜는 월간 달력에서 별도의 시각적 강조를 적용합니다.
     /// </summary>
     public bool IsSelected
     {
@@ -84,20 +77,12 @@ public class MonthlyDayViewModel : ViewModelBase
 
     /// <summary>
     /// Drag 중인 일정의 현재 Drop 대상 날짜인지 여부입니다.
-    /// 한 번에 하나의 날짜 셀만 Drop 대상으로 강조합니다.
     /// </summary>
     public bool IsDropTarget
     {
         get => _isDropTarget;
         set => SetProperty(ref _isDropTarget, value);
     }
-
-    /// <summary>
-    /// 현재 날짜 셀 안에 표시할 단일 날짜 일정 목록입니다.
-    /// 여러 날짜에 걸치는 일정은 여기에 넣지 않고
-    /// MonthlyWeekViewModel의 연결 일정 막대로 별도 관리합니다.
-    /// </summary>
-    public ObservableCollection<MonthlyScheduleCardViewModel> Schedules { get; } = new();
 
     /// <summary>
     /// 날짜 셀을 생성합니다.
