@@ -71,9 +71,8 @@ public class MonthlyCalendarViewModel : ViewModelBase
     public ObservableCollection<MonthlyWeekViewModel> Weeks { get; } = new();
 
     /// <summary>
-    /// 현재 화면에서 표시할 일정 목록입니다.
-    /// 기존 임시 목록 UI와 일정 CRUD 기능을 유지하기 위해 사용합니다.
-    /// 이후 월간 달력 일정 배치 기능에서도 같은 Schedule 데이터를 사용합니다.
+    /// 현재 화면에서 사용하는 전체 일정 목록입니다.
+    /// 날짜 셀과 여러 날짜 연결 일정도 모두 같은 ScheduleItem 데이터를 사용합니다.
     /// </summary>
     public ObservableCollection<ScheduleItem> Schedules { get; } = new();
 
@@ -163,6 +162,7 @@ public class MonthlyCalendarViewModel : ViewModelBase
 
     /// <summary>
     /// 완료된 일정까지 목록에 표시할지 여부입니다.
+    /// 값이 변경되면 전체 일정과 월간 날짜별 일정을 다시 구성합니다.
     /// </summary>
     public bool ShowCompletedSchedules
     {
@@ -282,6 +282,11 @@ public class MonthlyCalendarViewModel : ViewModelBase
     public RelayCommand NextMonthCommand { get; }
 
     /// <summary>
+    /// 월간 달력에서 선택한 날짜를 현재 선택 날짜로 변경하는 Command입니다.
+    /// </summary>
+    public RelayCommand SelectDateCommand { get; }
+
+    /// <summary>
     /// 새 일정 작성 상태로 편집기를 여는 Command입니다.
     /// </summary>
     public RelayCommand OpenNewScheduleCommand { get; }
@@ -323,6 +328,7 @@ public class MonthlyCalendarViewModel : ViewModelBase
         PreviousMonthCommand = new RelayCommand(_ => MoveMonth(-1));
         CurrentMonthCommand = new RelayCommand(_ => MoveToCurrentMonth());
         NextMonthCommand = new RelayCommand(_ => MoveMonth(1));
+        SelectDateCommand = new RelayCommand(parameter => SelectDate(parameter as MonthlyDayViewModel));
 
         OpenNewScheduleCommand = new RelayCommand(_ => PrepareNewSchedule());
         SelectScheduleCommand = new RelayCommand(parameter => SelectSchedule(parameter as ScheduleItem));
@@ -349,7 +355,7 @@ public class MonthlyCalendarViewModel : ViewModelBase
 
         var firstDayOfMonth = new DateTime(DisplayMonth.Year, DisplayMonth.Month, 1);
 
-        // DayOfWeek에서 Sunday는 0이므로,
+        // DayOfWeek에서 Sunday는 0이므로
         // 해당 월 1일의 요일 값만큼 뒤로 이동하면 달력의 첫 일요일을 얻을 수 있습니다.
         var calendarStartDate = firstDayOfMonth.AddDays(-(int)firstDayOfMonth.DayOfWeek);
 
@@ -363,11 +369,13 @@ public class MonthlyCalendarViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// 저장된 일정을 다시 불러와 화면에서 사용할 목록을 갱신합니다.
+    /// 저장된 일정을 다시 불러옵니다.
+    /// 전체 일정 목록과 현재 월간 달력의 일정 표시 데이터를 함께 갱신합니다.
     /// </summary>
     public void LoadSchedules()
     {
         Schedules.Clear();
+        ClearMonthlyScheduleLayout();
 
         var schedules = _scheduleService.GetAll(ShowCompletedSchedules);
 
@@ -375,6 +383,223 @@ public class MonthlyCalendarViewModel : ViewModelBase
         {
             Schedules.Add(schedule);
         }
+
+        LoadSingleDaySchedules(schedules);
+        LoadSpanningSchedules(schedules);
+    }
+
+    /// <summary>
+    /// 현재 생성된 월간 달력의 일정 표시 데이터를 초기화합니다.
+    /// 단일 날짜 일정과 여러 날짜 연결 일정 모두 제거하여
+    /// 이후 일정 데이터를 처음부터 다시 구성할 수 있도록 합니다.
+    /// </summary>
+    private void ClearMonthlyScheduleLayout()
+    {
+        foreach (var week in Weeks)
+        {
+            week.SpanningSchedules.Clear();
+            week.UpdateSpanningRowCount(0);
+
+            foreach (var day in week.Days)
+            {
+                day.Schedules.Clear();
+            }
+        }
+    }
+
+    /// <summary>
+    /// 현재 42일 달력 범위에 포함되는 단일 날짜 일정을 날짜별로 배치합니다.
+    /// 여러 날짜에 걸치는 일정은 연결 막대로 처리하므로 여기서는 제외합니다.
+    /// </summary>
+    private void LoadSingleDaySchedules(IReadOnlyList<ScheduleItem> schedules)
+    {
+        foreach (var week in Weeks)
+        {
+            foreach (var day in week.Days)
+            {
+                var schedulesOnDate = schedules
+                    .Where(schedule => !IsSpanningSchedule(schedule) && IsScheduleOnDate(schedule, day.Date))
+                    .OrderBy(schedule => schedule.IsAllDay ? 0 : 1)
+                    .ThenBy(schedule => schedule.StartAt)
+                    .ThenBy(schedule => schedule.Title)
+                    .ToList();
+
+                foreach (var schedule in schedulesOnDate)
+                {
+                    day.Schedules.Add(new MonthlyScheduleCardViewModel(schedule, day.Date));
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 여러 날짜에 걸친 일정을 각 주 안에서 보이는 구간으로 분할하고,
+    /// 같은 주에서 서로 겹치지 않도록 세로 행을 계산하여 배치합니다.
+    /// </summary>
+    private void LoadSpanningSchedules(IReadOnlyList<ScheduleItem> schedules)
+    {
+        foreach (var week in Weeks)
+        {
+            LoadSpanningSchedulesForWeek(week, schedules);
+        }
+    }
+
+    /// <summary>
+    /// 지정한 한 주에 보이는 여러 날짜 일정들을 수집한 뒤
+    /// 일정이 겹치지 않는 가장 위쪽 행부터 차례대로 배치합니다.
+    /// </summary>
+    private static void LoadSpanningSchedulesForWeek(MonthlyWeekViewModel week, IReadOnlyList<ScheduleItem> schedules)
+    {
+        var candidates = new List<MonthlySpanningScheduleCandidate>();
+
+        foreach (var schedule in schedules)
+        {
+            if (!IsSpanningSchedule(schedule))
+            {
+                continue;
+            }
+
+            var scheduleStartDate = schedule.StartAt.Date;
+            var scheduleEndDate = GetLastDisplayDate(schedule);
+
+            var visibleStartDate = scheduleStartDate < week.WeekStartDate
+                ? week.WeekStartDate
+                : scheduleStartDate;
+
+            var visibleEndDate = scheduleEndDate > week.WeekEndDate
+                ? week.WeekEndDate
+                : scheduleEndDate;
+
+            if (visibleStartDate > visibleEndDate)
+            {
+                continue;
+            }
+
+            var startDayIndex = (visibleStartDate - week.WeekStartDate).Days;
+            var endDayIndex = (visibleEndDate - week.WeekStartDate).Days;
+
+            candidates.Add(
+                new MonthlySpanningScheduleCandidate(
+                    schedule,
+                    visibleStartDate,
+                    visibleEndDate,
+                    startDayIndex,
+                    endDayIndex,
+                    scheduleEndDate > visibleEndDate));
+        }
+
+        // 같은 날짜에 여러 일정이 시작하면 더 길게 이어지는 일정을 먼저 배치합니다.
+        // 이렇게 하면 긴 일정이 위쪽 행에 안정적으로 자리 잡아
+        // 월간 달력에서 연결 흐름을 읽기 쉬워집니다.
+        var orderedCandidates = candidates
+            .OrderBy(candidate => candidate.StartDayIndex)
+            .ThenByDescending(candidate => candidate.EndDayIndex)
+            .ThenBy(candidate => candidate.Schedule.StartAt)
+            .ThenBy(candidate => candidate.Schedule.Title)
+            .ToList();
+
+        // 각 행에서 현재 가장 마지막으로 사용 중인 날짜 열 번호를 저장합니다.
+        // 예를 들어 첫 번째 행이 목요일까지 사용 중이라면 값은 4입니다.
+        var rowEndDayIndices = new List<int>();
+
+        foreach (var candidate in orderedCandidates)
+        {
+            var rowIndex = FindAvailableSpanningRow(rowEndDayIndices, candidate.StartDayIndex);
+
+            if (rowIndex == rowEndDayIndices.Count)
+            {
+                // 사용할 수 있는 기존 행이 없으므로 새로운 행을 추가합니다.
+                rowEndDayIndices.Add(candidate.EndDayIndex);
+            }
+            else
+            {
+                // 기존 행의 빈 영역을 재사용하고
+                // 이 일정이 새로 차지하는 마지막 열 번호로 갱신합니다.
+                rowEndDayIndices[rowIndex] = candidate.EndDayIndex;
+            }
+
+            var daySpan = candidate.EndDayIndex - candidate.StartDayIndex + 1;
+
+            week.SpanningSchedules.Add(
+                new MonthlySpanningScheduleViewModel(
+                    candidate.Schedule,
+                    candidate.VisibleStartDate,
+                    candidate.VisibleEndDate,
+                    candidate.StartDayIndex,
+                    daySpan,
+                    rowIndex,
+                    candidate.ContinuesToNextWeek));
+        }
+
+        week.UpdateSpanningRowCount(rowEndDayIndices.Count);
+    }
+
+    /// <summary>
+    /// 연결 일정이 사용할 수 있는 가장 위쪽의 빈 행을 찾습니다.
+    /// 일정의 시작 열이 기존 행의 마지막 사용 열보다 뒤에 있으면
+    /// 두 일정은 서로 겹치지 않으므로 같은 행을 재사용할 수 있습니다.
+    /// </summary>
+    private static int FindAvailableSpanningRow(List<int> rowEndDayIndices, int startDayIndex)
+    {
+        for (var rowIndex = 0; rowIndex < rowEndDayIndices.Count; rowIndex++)
+        {
+            if (startDayIndex > rowEndDayIndices[rowIndex])
+            {
+                return rowIndex;
+            }
+        }
+
+        return rowEndDayIndices.Count;
+    }
+
+    /// <summary>
+    /// 일정이 월간 달력에서 두 개 이상의 날짜 셀을 차지하는지 확인합니다.
+    /// 실제 마지막 표시 날짜가 시작 날짜보다 뒤라면 연결 일정으로 판단합니다.
+    /// </summary>
+    private static bool IsSpanningSchedule(ScheduleItem schedule)
+    {
+        return GetLastDisplayDate(schedule) > schedule.StartAt.Date;
+    }
+
+    /// <summary>
+    /// 일정이 월간 달력에서 실제로 마지막으로 차지해야 하는 날짜를 반환합니다.
+    /// 시간 일정이 정확히 다음 날 00:00에 끝나면 그 날짜는 표시하지 않고,
+    /// 하루 종일 일정은 종료 날짜까지 포함합니다.
+    /// </summary>
+    private static DateTime GetLastDisplayDate(ScheduleItem schedule)
+    {
+        if (schedule.IsAllDay)
+        {
+            return schedule.EndAt.Date;
+        }
+
+        if (schedule.EndAt > schedule.StartAt &&
+            schedule.EndAt.TimeOfDay == TimeSpan.Zero)
+        {
+            return schedule.EndAt.Date.AddDays(-1);
+        }
+
+        return schedule.EndAt.Date;
+    }
+
+    /// <summary>
+    /// 지정한 일정이 특정 날짜에 실제로 포함되는지 확인합니다.
+    /// 하루 종일 일정은 시작일과 종료일을 모두 포함하고,
+    /// 시간 일정은 해당 날짜의 24시간 범위와 겹치는지 검사합니다.
+    /// </summary>
+    private static bool IsScheduleOnDate(ScheduleItem schedule, DateTime date)
+    {
+        if (schedule.IsAllDay)
+        {
+            return schedule.StartAt.Date <= date.Date &&
+                   schedule.EndAt.Date >= date.Date;
+        }
+
+        var dayStart = date.Date;
+        var dayEnd = dayStart.AddDays(1);
+
+        return schedule.StartAt < dayEnd &&
+               schedule.EndAt > dayStart;
     }
 
     /// <summary>
@@ -390,6 +615,7 @@ public class MonthlyCalendarViewModel : ViewModelBase
         IsEditorOpen = false;
 
         LoadMonth();
+        LoadSchedules();
     }
 
     /// <summary>
@@ -403,6 +629,7 @@ public class MonthlyCalendarViewModel : ViewModelBase
         IsEditorOpen = false;
 
         LoadMonth();
+        LoadSchedules();
     }
 
     /// <summary>
@@ -418,6 +645,22 @@ public class MonthlyCalendarViewModel : ViewModelBase
                 day.IsSelected = day.Date == SelectedDate;
             }
         }
+    }
+
+    /// <summary>
+    /// 월간 달력에서 사용자가 클릭한 날짜를 현재 선택 날짜로 변경합니다.
+    /// 42개의 날짜 셀 전체에서 선택 상태를 다시 계산하여
+    /// 한 번에 하나의 날짜만 선택 상태가 되도록 유지합니다.
+    /// </summary>
+    private void SelectDate(MonthlyDayViewModel? selectedDay)
+    {
+        if (selectedDay is null)
+        {
+            return;
+        }
+
+        SelectedDate = selectedDay.Date;
+        UpdateSelectedDateState();
     }
 
     /// <summary>
@@ -567,6 +810,7 @@ public class MonthlyCalendarViewModel : ViewModelBase
 
     /// <summary>
     /// 새 일정 작성 상태로 편집기를 준비합니다.
+    /// 현재 선택 날짜를 새 일정의 기본 시작/종료 날짜로 사용합니다.
     /// </summary>
     private void PrepareNewSchedule()
     {
@@ -619,6 +863,7 @@ public class MonthlyCalendarViewModel : ViewModelBase
 
     /// <summary>
     /// 일정 입력값을 기본 상태로 되돌립니다.
+    /// 현재 선택된 날짜를 새 일정의 기본 날짜로 사용합니다.
     /// </summary>
     private void ResetInput()
     {
@@ -638,4 +883,16 @@ public class MonthlyCalendarViewModel : ViewModelBase
 
         ErrorMessage = string.Empty;
     }
+
+    /// <summary>
+    /// 한 주 안에서 여러 날짜 일정의 실제 표시 범위를 계산할 때 사용하는 내부 데이터입니다.
+    /// 아직 화면용 ViewModel을 생성하기 전의 임시 계산 결과입니다.
+    /// </summary>
+    private readonly record struct MonthlySpanningScheduleCandidate(
+        ScheduleItem Schedule,
+        DateTime VisibleStartDate,
+        DateTime VisibleEndDate,
+        int StartDayIndex,
+        int EndDayIndex,
+        bool ContinuesToNextWeek);
 }

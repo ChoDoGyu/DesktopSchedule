@@ -7,8 +7,17 @@ namespace DesktopSchedule.ViewModels;
 /// 일요일부터 토요일까지 7개의 날짜 셀과
 /// 해당 주를 가로질러 표시되는 여러 날짜 일정 막대를 관리합니다.
 /// </summary>
-public class MonthlyWeekViewModel
+public class MonthlyWeekViewModel : ViewModelBase
 {
+    // 한 행의 연결 일정 막대가 사용할 기본 높이입니다.
+    private const double SpanningScheduleRowHeight = 28.0;
+
+    // 연결 일정 막대 영역 아래에 둘 여백입니다.
+    private const double SpanningScheduleAreaPadding = 4.0;
+
+    // 현재 주의 연결 일정들이 사용하는 실제 행 개수입니다.
+    private int _spanningRowCount;
+
     /// <summary>
     /// 이 주의 시작 날짜입니다.
     /// 월간 달력은 일요일을 한 주의 시작으로 사용합니다.
@@ -31,6 +40,30 @@ public class MonthlyWeekViewModel
     /// 실제 일정 하나가 여러 주에 걸치면 각 주마다 별도의 표시 막대가 생성됩니다.
     /// </summary>
     public ObservableCollection<MonthlySpanningScheduleViewModel> SpanningSchedules { get; } = new();
+
+    /// <summary>
+    /// 현재 주에서 연결 일정 막대가 실제로 사용하는 세로 행 개수입니다.
+    /// 일정이 서로 겹치면 필요한 만큼 행 수가 증가합니다.
+    /// </summary>
+    public int SpanningRowCount
+    {
+        get => _spanningRowCount;
+        private set
+        {
+            if (SetProperty(ref _spanningRowCount, value))
+            {
+                OnPropertyChanged(nameof(SpanningAreaHeight));
+            }
+        }
+    }
+
+    /// <summary>
+    /// 연결 일정 막대들이 차지할 전체 세로 영역의 높이입니다.
+    /// 이후 월간 XAML에서 일정 개수에 따라 필요한 공간을 확보할 때 사용합니다.
+    /// </summary>
+    public double SpanningAreaHeight => SpanningRowCount == 0
+        ? 0
+        : SpanningRowCount * SpanningScheduleRowHeight + SpanningScheduleAreaPadding;
 
     /// <summary>
     /// 월간 달력의 한 주를 생성합니다.
@@ -76,5 +109,19 @@ public class MonthlyWeekViewModel
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// 현재 주의 연결 일정들이 사용하는 행 개수를 갱신합니다.
+    /// 음수 행 개수는 존재할 수 없으므로 전달되면 예외를 발생시킵니다.
+    /// </summary>
+    public void UpdateSpanningRowCount(int rowCount)
+    {
+        if (rowCount < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(rowCount));
+        }
+
+        SpanningRowCount = rowCount;
     }
 }

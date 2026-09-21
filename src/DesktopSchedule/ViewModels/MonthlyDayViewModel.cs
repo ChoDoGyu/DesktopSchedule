@@ -1,8 +1,11 @@
-﻿namespace DesktopSchedule.ViewModels;
+﻿using System.Collections.ObjectModel;
+
+namespace DesktopSchedule.ViewModels;
 
 /// <summary>
 /// 월간 달력에서 날짜 한 칸의 상태를 관리합니다.
-/// 날짜 자체의 정보와 현재 월 여부, 오늘 여부, 선택 및 Drag Drop 상태를 제공합니다.
+/// 날짜 자체의 정보와 표시 월과의 관계, 오늘 여부,
+/// 선택 상태, Drag Drop 상태 및 해당 날짜의 일정을 제공합니다.
 /// </summary>
 public class MonthlyDayViewModel : ViewModelBase
 {
@@ -19,10 +22,21 @@ public class MonthlyDayViewModel : ViewModelBase
     public DateTime Date { get; }
 
     /// <summary>
+    /// 이 날짜가 현재 표시 월보다 이전 달에 속하는지 여부입니다.
+    /// 월간 달력의 앞쪽 영역을 채우는 날짜를 구분할 때 사용합니다.
+    /// </summary>
+    public bool IsPreviousMonth { get; }
+
+    /// <summary>
     /// 이 날짜가 현재 화면에서 보고 있는 월에 속하는지 여부입니다.
-    /// false이면 이전 달 또는 다음 달에서 함께 표시되는 날짜입니다.
     /// </summary>
     public bool IsCurrentMonth { get; }
+
+    /// <summary>
+    /// 이 날짜가 현재 표시 월보다 다음 달에 속하는지 여부입니다.
+    /// 월간 달력의 뒤쪽 영역을 채우는 날짜를 구분할 때 사용합니다.
+    /// </summary>
+    public bool IsNextMonth { get; }
 
     /// <summary>
     /// 이 날짜가 오늘인지 여부입니다.
@@ -42,7 +56,7 @@ public class MonthlyDayViewModel : ViewModelBase
     public bool IsSaturday => Date.DayOfWeek == DayOfWeek.Saturday;
 
     /// <summary>
-    /// 날짜 셀의 오른쪽 위에 표시할 날짜 문자열입니다.
+    /// 날짜 셀에 표시할 날짜 문자열입니다.
     /// 이전 달 또는 다음 달의 1일은 어느 달인지 알 수 있도록 월까지 함께 표시합니다.
     /// </summary>
     public string DayText
@@ -79,6 +93,13 @@ public class MonthlyDayViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// 현재 날짜 셀 안에 표시할 단일 날짜 일정 목록입니다.
+    /// 여러 날짜에 걸치는 일정은 여기에 넣지 않고
+    /// MonthlyWeekViewModel의 연결 일정 막대로 별도 관리합니다.
+    /// </summary>
+    public ObservableCollection<MonthlyScheduleCardViewModel> Schedules { get; } = new();
+
+    /// <summary>
     /// 날짜 셀을 생성합니다.
     /// displayMonth는 현재 월간 화면에서 보고 있는 월을 의미합니다.
     /// </summary>
@@ -86,8 +107,11 @@ public class MonthlyDayViewModel : ViewModelBase
     {
         Date = date.Date;
 
-        IsCurrentMonth =
-            Date.Year == displayMonth.Year &&
-            Date.Month == displayMonth.Month;
+        var displayMonthStart = new DateTime(displayMonth.Year, displayMonth.Month, 1);
+        var nextMonthStart = displayMonthStart.AddMonths(1);
+
+        IsPreviousMonth = Date < displayMonthStart;
+        IsCurrentMonth = Date >= displayMonthStart && Date < nextMonthStart;
+        IsNextMonth = Date >= nextMonthStart;
     }
 }
