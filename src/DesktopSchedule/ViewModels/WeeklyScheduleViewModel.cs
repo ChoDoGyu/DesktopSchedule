@@ -2,21 +2,18 @@
 using DesktopSchedule.Commands;
 using DesktopSchedule.Models;
 using DesktopSchedule.Services;
-using DesktopSchedule.ViewModels.Layout;
 
 namespace DesktopSchedule.ViewModels;
 
 /// <summary>
-/// 주간 일정 화면의 상태와 사용자 동작을 관리합니다.
-/// 시간축과 일정 배치 계산은 전용 Calculator에 위임합니다.
+/// 주간 7일 일정 화면의 상태와 사용자 동작을 관리합니다.
 /// </summary>
 public class WeeklyScheduleViewModel : ViewModelBase
 {
-    private const int DragSnapMinutes = 15;
+    private const double SpanningScheduleRowHeight = 31.0;
+    private const double SpanningScheduleAreaPadding = 4.0;
 
     private readonly ScheduleService _scheduleService;
-    private readonly WeeklyTimelineLayoutCalculator _timelineLayoutCalculator;
-    private readonly WeeklyScheduleLayoutCalculator _scheduleLayoutCalculator;
 
     private DateTime _weekStartDate;
     private DateTime _selectedDate;
@@ -33,15 +30,30 @@ public class WeeklyScheduleViewModel : ViewModelBase
     private bool _newIsReminderEnabled;
     private int _newReminderMinutesBefore = 10;
     private string _errorMessage = string.Empty;
+    private double _spanningAreaHeight;
 
+    /// <summary>
+    /// 현재 주의 일요일부터 토요일까지 7일입니다.
+    /// </summary>
     public ObservableCollection<WeeklyDayViewModel> Days { get; } = new();
 
-    public ObservableCollection<WeeklyTimelineSegmentViewModel> TimelineSegments { get; } = new();
+    /// <summary>
+    /// 현재 주에서 여러 날짜에 걸쳐 연결해서 표시할 일정 막대입니다.
+    /// </summary>
+    public ObservableCollection<WeeklySpanningScheduleViewModel> SpanningSchedules { get; } = new();
 
-    public double HourHeight => _timelineLayoutCalculator.HourHeight;
+    /// <summary>
+    /// 여러 날짜 일정 막대가 차지할 화면 높이입니다.
+    /// </summary>
+    public double SpanningAreaHeight
+    {
+        get => _spanningAreaHeight;
+        private set => SetProperty(ref _spanningAreaHeight, value);
+    }
 
-    public double TimelineDisplayHeight => _timelineLayoutCalculator.GetDisplayHeight(TimelineSegments);
-
+    /// <summary>
+    /// 일정 알림에서 선택할 수 있는 시작 전 시간 목록입니다.
+    /// </summary>
     public IReadOnlyList<int> ReminderMinuteOptions { get; } = new[] { 0, 5, 10, 30, 60, 1440 };
 
     public DateTime WeekStartDate
@@ -171,9 +183,6 @@ public class WeeklyScheduleViewModel : ViewModelBase
     {
         _scheduleService = scheduleService ?? throw new ArgumentNullException(nameof(scheduleService));
 
-        _timelineLayoutCalculator = new WeeklyTimelineLayoutCalculator();
-        _scheduleLayoutCalculator = new WeeklyScheduleLayoutCalculator(_timelineLayoutCalculator);
-
         PreviousWeekCommand = new RelayCommand(_ => MoveWeek(-1));
         CurrentWeekCommand = new RelayCommand(_ => MoveToCurrentWeek());
         NextWeekCommand = new RelayCommand(_ => MoveWeek(1));
@@ -192,33 +201,165 @@ public class WeeklyScheduleViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Drag & Drop된 시간 일정을 지정한 요일과 시간으로 이동합니다.
+    /// 현재 주의 날짜별 일정과 여러 날짜 연결 일정을 다시 구성합니다.
     /// </summary>
-    public void MoveScheduleByDrop(ScheduleItem schedule, int targetDayIndex, double timelineOffset)
+    private void LoadWeek()
     {
-        if (schedule is null || schedule.IsAllDay)
+        Days.Clear();
+        SpanningSchedules.Clear();
+
+        var schedules = _scheduleService.GetAll();
+
+        LoadSpanningSchedules(schedules);
+        LoadDays(schedules);
+    }
+
+    /// <summary>
+    /// 두 날짜 이상에 걸친 일정을 하나의 연결된 막대로 구성합니다.
+    /// 일정이 현재 주의 바깥까지 이어지면 현재 주에 보이는 부분만 잘라 표시합니다.
+    /// </summary>
+    private void LoadSpanningSchedules(IReadOnlyList<ScheduleItem> schedules)
+    {
+        var candidates = new List<SpanningScheduleCandidate>();
+
+        foreach (var schedule in schedules)
         {
+            if (!IsSpanningSchedule(schedule))
+            {
+                continue;
+            }
+
+            var scheduleStartDate = schedule.StartAt.Date;
+            var scheduleEndDate = GetLastDisplayDate(schedule);
+
+            var visibleStartDate = scheduleStartDate < WeekStartDate ? WeekStartDate : scheduleStartDate;
+            var visibleEndDate = scheduleEndDate > WeekEndDate ? WeekEndDate : scheduleEndDate;
+
+            if (visibleStartDate > visibleEndDate)
+            {
+                continue;
+            }
+
+            var startDayIndex = (visibleStartDate - WeekStartDate).Days;
+            var endDayIndex = (visibleEndDate - WeekStartDate).Days;
+
+            candidates.Add(new SpanningScheduleCandidate(
+                schedule,
+                visibleStartDate,
+                startDayIndex,
+                endDayIndex));
+        }
+
+        var orderedCandidates = candidates
+            .OrderBy(candidate => candidate.StartDayIndex)
+            .ThenByDescending(candidate => candidate.EndDayIndex)
+            .ThenBy(candidate => candidate.Schedule.StartAt)
+            .ToList();
+
+        var rowEndDayIndices = new List<int>();
+
+        foreach (var candidate in orderedCandidates)
+        {
+            var rowIndex = FindAvailableSpanningRow(
+                rowEndDayIndices,
+                candidate.StartDayIndex);
+
+            if (rowIndex == rowEndDayIndices.Count)
+            {
+                rowEndDayIndices.Add(candidate.EndDayIndex);
+            }
+            else
+            {
+                rowEndDayIndices[rowIndex] = candidate.EndDayIndex;
+            }
+
+            var daySpan = candidate.EndDayIndex - candidate.StartDayIndex + 1;
+
+            SpanningSchedules.Add(
+                new WeeklySpanningScheduleViewModel(
+                    candidate.Schedule,
+                    candidate.VisibleStartDate,
+                    candidate.StartDayIndex,
+                    daySpan,
+                    rowIndex));
+        }
+
+        SpanningAreaHeight = rowEndDayIndices.Count == 0
+            ? 0
+            : rowEndDayIndices.Count * SpanningScheduleRowHeight + SpanningScheduleAreaPadding;
+    }
+
+    /// <summary>
+    /// 여러 날짜 일정 막대가 사용할 수 있는 가장 위쪽의 빈 행을 찾습니다.
+    /// </summary>
+    private static int FindAvailableSpanningRow(List<int> rowEndDayIndices, int startDayIndex)
+    {
+        for (var index = 0; index < rowEndDayIndices.Count; index++)
+        {
+            if (startDayIndex > rowEndDayIndices[index])
+            {
+                return index;
+            }
+        }
+
+        return rowEndDayIndices.Count;
+    }
+
+    /// <summary>
+    /// 각 날짜 칸에 표시할 단일 날짜 일정을 구성합니다.
+    /// 여러 날짜 일정은 위쪽 연결 막대에 표시하므로 여기서는 제외합니다.
+    /// </summary>
+    private void LoadDays(IReadOnlyList<ScheduleItem> schedules)
+    {
+        for (var dayOffset = 0; dayOffset < 7; dayOffset++)
+        {
+            var date = WeekStartDate.AddDays(dayOffset);
+
+            var day = new WeeklyDayViewModel(date)
+            {
+                IsSelected = date.Date == SelectedDate.Date
+            };
+
+            var schedulesOnDate = schedules
+                .Where(schedule => !IsSpanningSchedule(schedule) && IsScheduleOnDate(schedule, date))
+                .OrderBy(schedule => schedule.IsAllDay ? 0 : 1)
+                .ThenBy(schedule => schedule.StartAt)
+                .ThenBy(schedule => schedule.Title)
+                .ToList();
+
+            foreach (var schedule in schedulesOnDate)
+            {
+                day.Schedules.Add(new WeeklyScheduleCardViewModel(schedule, date));
+            }
+
+            Days.Add(day);
+        }
+    }
+
+    /// <summary>
+    /// Drag한 일정을 지정한 날짜로 이동합니다.
+    /// 사용자가 잡은 화면상의 날짜를 기준으로 일정 전체를 같은 일수만큼 이동합니다.
+    /// </summary>
+    public void MoveScheduleByDrop(ScheduleItem schedule, DateTime displayDate, WeeklyDayViewModel targetDay)
+    {
+        ArgumentNullException.ThrowIfNull(schedule);
+        ArgumentNullException.ThrowIfNull(targetDay);
+
+        var dayOffset = (targetDay.Date - displayDate.Date).Days;
+
+        if (dayOffset == 0)
+        {
+            SetDropTarget(null);
             return;
         }
 
-        if (targetDayIndex < 0 || targetDayIndex > 6)
-        {
-            return;
-        }
-
-        var timelineSegments = TimelineSegments.ToList();
-        var targetMinutes = _timelineLayoutCalculator.GetMinutesFromTimelineOffset(timelineSegments, timelineOffset);
-
-        targetMinutes = SnapMinutes(targetMinutes);
-        targetMinutes = Math.Clamp(targetMinutes, 0, 1425);
-
-        var newStartAt = WeekStartDate.AddDays(targetDayIndex).AddMinutes(targetMinutes);
+        var newStartAt = schedule.StartAt.AddDays(dayOffset);
 
         try
         {
             _scheduleService.Move(schedule.Id, newStartAt);
 
-            SelectedDate = newStartAt.Date;
+            SelectedDate = targetDay.Date;
             ErrorMessage = string.Empty;
 
             LoadWeek();
@@ -229,41 +370,62 @@ public class WeeklyScheduleViewModel : ViewModelBase
         }
     }
 
-    private void LoadWeek()
+    /// <summary>
+    /// Drag 중 현재 Drop 대상인 날짜 하나만 강조합니다.
+    /// </summary>
+    public void SetDropTarget(WeeklyDayViewModel? targetDay)
     {
-        var schedules = _scheduleService.GetAll();
-
-        LoadTimeline(schedules);
-        LoadDays(schedules);
+        foreach (var day in Days)
+        {
+            day.IsDropTarget = day == targetDay;
+        }
     }
 
-    private void LoadTimeline(IReadOnlyList<ScheduleItem> schedules)
+    /// <summary>
+    /// 일정이 두 개 이상의 실제 날짜 칸을 차지하는지 확인합니다.
+    /// </summary>
+    private static bool IsSpanningSchedule(ScheduleItem schedule)
     {
-        TimelineSegments.Clear();
-
-        var segments = _timelineLayoutCalculator.CreateSegments(schedules, WeekStartDate);
-
-        foreach (var segment in segments)
-        {
-            TimelineSegments.Add(segment);
-        }
-
-        OnPropertyChanged(nameof(TimelineDisplayHeight));
+        return GetLastDisplayDate(schedule) > schedule.StartAt.Date;
     }
 
-    private void LoadDays(IReadOnlyList<ScheduleItem> schedules)
+    /// <summary>
+    /// 일정이 화면에서 실제로 마지막으로 차지하는 날짜를 반환합니다.
+    /// 시간 일정이 정확히 다음 날 00:00에 끝나면 그 다음 날짜는 차지하지 않습니다.
+    /// 하루 종일 일정의 종료 날짜는 포함해서 표시합니다.
+    /// </summary>
+    private static DateTime GetLastDisplayDate(ScheduleItem schedule)
     {
-        Days.Clear();
-
-        var timelineSegments = TimelineSegments.ToList();
-
-        for (var dayOffset = 0; dayOffset < 7; dayOffset++)
+        if (schedule.IsAllDay)
         {
-            var date = WeekStartDate.AddDays(dayOffset);
-            var isSelected = date.Date == SelectedDate.Date;
-
-            Days.Add(_scheduleLayoutCalculator.CreateDay(date, isSelected, schedules, timelineSegments));
+            return schedule.EndAt.Date;
         }
+
+        if (schedule.EndAt > schedule.StartAt &&
+            schedule.EndAt.TimeOfDay == TimeSpan.Zero)
+        {
+            return schedule.EndAt.Date.AddDays(-1);
+        }
+
+        return schedule.EndAt.Date;
+    }
+
+    /// <summary>
+    /// 지정한 일정이 현재 날짜에 포함되는지 확인합니다.
+    /// </summary>
+    private static bool IsScheduleOnDate(ScheduleItem schedule, DateTime date)
+    {
+        if (schedule.IsAllDay)
+        {
+            return schedule.StartAt.Date <= date.Date &&
+                   schedule.EndAt.Date >= date.Date;
+        }
+
+        var dayStart = date.Date;
+        var dayEnd = dayStart.AddDays(1);
+
+        return schedule.StartAt < dayEnd &&
+               schedule.EndAt > dayStart;
     }
 
     private void SelectDate(WeeklyDayViewModel? selectedDay)
@@ -464,16 +626,17 @@ public class WeeklyScheduleViewModel : ViewModelBase
         LoadWeek();
     }
 
-    /// <summary>
-    /// Drag & Drop 시간을 15분 단위로 맞춥니다.
-    /// </summary>
-    private static int SnapMinutes(int minutes)
-    {
-        return (int)Math.Round(minutes / (double)DragSnapMinutes, MidpointRounding.AwayFromZero) * DragSnapMinutes;
-    }
-
     private static DateTime GetWeekStart(DateTime date)
     {
         return date.Date.AddDays(-(int)date.DayOfWeek);
     }
+
+    /// <summary>
+    /// 여러 날짜 일정의 주간 표시 계산에 사용하는 내부 데이터입니다.
+    /// </summary>
+    private readonly record struct SpanningScheduleCandidate(
+        ScheduleItem Schedule,
+        DateTime VisibleStartDate,
+        int StartDayIndex,
+        int EndDayIndex);
 }

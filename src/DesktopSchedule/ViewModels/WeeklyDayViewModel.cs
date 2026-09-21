@@ -1,5 +1,4 @@
-﻿using System.Collections.ObjectModel; // 날짜별 일정 목록을 관리하기 위해 필요합니다.
-using DesktopSchedule.Models; // ScheduleItem을 사용하기 위해 필요합니다.
+﻿using System.Collections.ObjectModel;
 
 namespace DesktopSchedule.ViewModels;
 
@@ -8,8 +7,8 @@ namespace DesktopSchedule.ViewModels;
 /// </summary>
 public class WeeklyDayViewModel : ViewModelBase
 {
-    // 현재 날짜가 사용자가 선택한 날짜인지 저장합니다.
     private bool _isSelected;
+    private bool _isDropTarget;
 
     /// <summary>
     /// 이 항목이 나타내는 날짜입니다.
@@ -51,14 +50,18 @@ public class WeeklyDayViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// 날짜 헤더 아래에 작은 배지로 표시할 하루 종일 일정입니다.
+    /// Drag 중인 일정이 현재 날짜에 Drop될 예정인지 나타냅니다.
     /// </summary>
-    public ObservableCollection<ScheduleItem> AllDaySchedules { get; } = new();
+    public bool IsDropTarget
+    {
+        get => _isDropTarget;
+        set => SetProperty(ref _isDropTarget, value);
+    }
 
     /// <summary>
-    /// 이 날짜의 시간표에 배치할 시간 일정 조각입니다.
+    /// 현재 날짜에 표시할 일정 카드 목록입니다.
     /// </summary>
-    public ObservableCollection<WeeklyTimedScheduleViewModel> TimedSchedules { get; } = new();
+    public ObservableCollection<WeeklyScheduleCardViewModel> Schedules { get; } = new();
 
     public WeeklyDayViewModel(DateTime date)
     {
