@@ -7,8 +7,14 @@
         xmlns:views="clr-namespace:DesktopSchedule.Views"
         mc:Ignorable="d"
         Title="{Binding Title}"
-        Height="450"
-        Width="800">
+        Width="420"
+        Height="620"
+        MinWidth="320"
+        MinHeight="400"
+        ResizeMode="CanResize"
+        WindowStartupLocation="CenterScreen"
+        Topmost="{Binding IsTopmost}"
+        ShowInTaskbar="{Binding ShowInTaskbar}">
 
     <Window.Resources>
         <DataTemplate DataType="{x:Type vm:MonthlyCalendarViewModel}">
@@ -28,37 +34,52 @@
         </DataTemplate>
     </Window.Resources>
 
-    <Grid>
+    <Grid Margin="16">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0"
-                    Orientation="Horizontal"
-                    Margin="12">
+        <TextBlock Grid.Row="0"
+                   Text="{Binding Title}"
+                   FontSize="24"
+                   FontWeight="SemiBold"
+                   Margin="0,0,0,16" />
 
-            <Button Content="월간 달력"
+        <UniformGrid Grid.Row="1"
+                     Rows="1"
+                     Columns="4"
+                     Margin="0,0,0,16">
+
+            <Button Content="월간"
                     Command="{Binding ShowMonthlyCalendarCommand}"
-                    Margin="0,0,8,0"
-                    Padding="12,6" />
+                    Margin="0,0,4,0"
+                    Padding="6" />
 
-            <Button Content="주간 일정"
+            <Button Content="주간"
                     Command="{Binding ShowWeeklyScheduleCommand}"
-                    Margin="0,0,8,0"
-                    Padding="12,6" />
+                    Margin="4,0"
+                    Padding="6" />
 
             <Button Content="할 일"
                     Command="{Binding ShowTodoCommand}"
-                    Margin="0,0,8,0"
-                    Padding="12,6" />
+                    Margin="4,0"
+                    Padding="6" />
 
             <Button Content="설정"
                     Command="{Binding ShowSettingsCommand}"
-                    Padding="12,6" />
-        </StackPanel>
+                    Margin="4,0,0,0"
+                    Padding="6" />
+        </UniformGrid>
 
-        <ContentControl Grid.Row="1"
-                        Content="{Binding CurrentViewModel}" />
+        <Border Grid.Row="2"
+                BorderBrush="LightGray"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="12">
+
+            <ContentControl Content="{Binding CurrentViewModel}" />
+        </Border>
     </Grid>
 </Window>

@@ -10,6 +10,12 @@ public class MainWindowViewModel : ViewModelBase
     // MainWindow의 제목을 저장합니다.
     private string _title = "DesktopSchedule";
 
+    // MainWindow를 다른 창보다 항상 위에 표시할지 저장합니다.
+    private bool _isTopmost;
+
+    // MainWindow를 Windows 작업 표시줄에 표시할지 저장합니다.
+    private bool _showInTaskbar = true;
+
     // 현재 MainWindow에 표시할 화면의 ViewModel을 저장합니다.
     private ViewModelBase _currentViewModel;
 
@@ -20,6 +26,24 @@ public class MainWindowViewModel : ViewModelBase
     {
         get => _title;
         set => SetProperty(ref _title, value);
+    }
+
+    /// <summary>
+    /// MainWindow를 다른 창보다 항상 위에 표시할지 여부입니다.
+    /// </summary>
+    public bool IsTopmost
+    {
+        get => _isTopmost;
+        set => SetProperty(ref _isTopmost, value);
+    }
+
+    /// <summary>
+    /// MainWindow를 Windows 작업 표시줄에 표시할지 여부입니다.
+    /// </summary>
+    public bool ShowInTaskbar
+    {
+        get => _showInTaskbar;
+        set => SetProperty(ref _showInTaskbar, value);
     }
 
     /// <summary>
