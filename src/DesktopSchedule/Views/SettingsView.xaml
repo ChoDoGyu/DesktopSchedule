@@ -7,102 +7,133 @@
              d:DesignHeight="450"
              d:DesignWidth="800">
 
-    <StackPanel Margin="16">
-        <TextBlock Text="설정"
-                   FontSize="24"
-                   FontWeight="SemiBold"
-                   Margin="0,0,0,20" />
+    <UserControl.Resources>
+        <Style x:Key="SettingsSectionTitleStyle"
+               TargetType="TextBlock"
+               BasedOn="{StaticResource AppSectionTitleTextStyle}">
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="Margin" Value="0,0,0,16" />
+        </Style>
 
-        <Border BorderBrush="LightGray"
-                BorderThickness="1"
-                CornerRadius="8"
-                Padding="16"
-                Margin="0,0,0,12">
+        <Style x:Key="SettingsDescriptionTextStyle"
+               TargetType="TextBlock"
+               BasedOn="{StaticResource AppSecondaryTextStyle}">
+            <Setter Property="Margin" Value="24,4,0,0" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
 
-            <StackPanel>
-                <TextBlock Text="Windows"
-                           FontSize="16"
-                           FontWeight="SemiBold"
-                           Margin="0,0,0,12" />
+        <Style x:Key="SettingsErrorTextStyle"
+               TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource ErrorBrush}" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Margin" Value="24,8,0,0" />
+        </Style>
+    </UserControl.Resources>
 
-                <CheckBox Content="Windows 시작 시 DesktopSchedule 자동 실행"
-                          IsChecked="{Binding IsStartupEnabled, Mode=TwoWay}"
-                          Margin="0,0,0,8" />
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled">
 
-                <TextBlock Text="Windows에 로그인하면 DesktopSchedule을 자동으로 실행합니다."
-                           Foreground="DimGray"
-                           FontSize="12"
-                           TextWrapping="Wrap"
-                           Margin="24,0,0,0" />
+        <StackPanel Margin="16">
+            <TextBlock Text="설정"
+                       Style="{StaticResource AppPageTitleTextStyle}"
+                       Margin="0,0,0,20" />
 
-                <TextBlock Text="{Binding StartupErrorMessage}"
-                           Foreground="DarkRed"
-                           TextWrapping="Wrap"
-                           Margin="24,8,0,0" />
-            </StackPanel>
-        </Border>
+            <Border Style="{StaticResource AppPanelBorderStyle}"
+                    Margin="0,0,0,12">
 
-        <Border BorderBrush="LightGray"
-                BorderThickness="1"
-                CornerRadius="8"
-                Padding="16"
-                Margin="0,0,0,12">
+                <StackPanel>
+                    <TextBlock Text="Windows"
+                               Style="{StaticResource SettingsSectionTitleStyle}" />
 
-            <StackPanel>
-                <TextBlock Text="창"
-                           FontSize="16"
-                           FontWeight="SemiBold"
-                           Margin="0,0,0,12" />
+                    <CheckBox Content="Windows 시작 시 DesktopSchedule 자동 실행"
+                              IsChecked="{Binding IsStartupEnabled, Mode=TwoWay}"
+                              Style="{StaticResource AppCheckBoxStyle}" />
 
-                <CheckBox Content="항상 위에 표시"
-                          IsChecked="{Binding IsTopmost, Mode=TwoWay}"
-                          Margin="0,0,0,8" />
+                    <TextBlock Text="Windows에 로그인하면 DesktopSchedule을 자동으로 실행합니다."
+                               Style="{StaticResource SettingsDescriptionTextStyle}" />
 
-                <TextBlock Text="DesktopSchedule을 다른 프로그램 창보다 항상 위에 표시합니다."
-                           Foreground="DimGray"
-                           FontSize="12"
-                           TextWrapping="Wrap"
-                           Margin="24,0,0,16" />
+                    <TextBlock Text="{Binding StartupErrorMessage}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock"
+                                   BasedOn="{StaticResource SettingsErrorTextStyle}">
+                                <Setter Property="Visibility" Value="Visible" />
 
-                <CheckBox Content="작업 표시줄에 표시"
-                          IsChecked="{Binding ShowInTaskbar, Mode=TwoWay}"
-                          Margin="0,0,0,8" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding StartupErrorMessage}" Value="">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
 
-                <TextBlock Text="끄더라도 시스템 트레이 아이콘은 유지되며 트레이에서 다시 열 수 있습니다."
-                           Foreground="DimGray"
-                           FontSize="12"
-                           TextWrapping="Wrap"
-                           Margin="24,0,0,8" />
+                                    <DataTrigger Binding="{Binding StartupErrorMessage}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
 
-                <TextBlock Text="{Binding AppSettingsErrorMessage}"
-                           Foreground="DarkRed"
-                           TextWrapping="Wrap"
-                           Margin="24,8,0,0" />
-            </StackPanel>
-        </Border>
+            <Border Style="{StaticResource AppPanelBorderStyle}"
+                    Margin="0,0,0,12">
 
-        <Border BorderBrush="LightGray"
-                BorderThickness="1"
-                CornerRadius="8"
-                Padding="16">
+                <StackPanel>
+                    <TextBlock Text="창"
+                               Style="{StaticResource SettingsSectionTitleStyle}" />
 
-            <StackPanel>
-                <TextBlock Text="초기화"
-                           FontSize="16"
-                           FontWeight="SemiBold"
-                           Margin="0,0,0,12" />
+                    <CheckBox Content="항상 위에 표시"
+                              IsChecked="{Binding IsTopmost, Mode=TwoWay}"
+                              Style="{StaticResource AppCheckBoxStyle}" />
 
-                <Button Content="앱 표시 설정 기본값으로 초기화"
-                        Command="{Binding ResetSettingsCommand}"
-                        HorizontalAlignment="Left"
-                        Padding="12,6"
-                        Margin="0,0,0,8" />
+                    <TextBlock Text="DesktopSchedule을 다른 프로그램 창보다 항상 위에 표시합니다."
+                               Style="{StaticResource SettingsDescriptionTextStyle}"
+                               Margin="24,4,0,16" />
 
-                <TextBlock Text="항상 위와 작업 표시줄 설정, 창 위치와 크기를 기본값으로 되돌립니다. Windows 시작 프로그램 설정과 일정 데이터는 유지됩니다."
-                           Foreground="DimGray"
-                           FontSize="12"
-                           TextWrapping="Wrap" />
-            </StackPanel>
-        </Border>
-    </StackPanel>
+                    <CheckBox Content="작업 표시줄에 표시"
+                              IsChecked="{Binding ShowInTaskbar, Mode=TwoWay}"
+                              Style="{StaticResource AppCheckBoxStyle}" />
+
+                    <TextBlock Text="끄더라도 시스템 트레이 아이콘은 유지되며 트레이에서 다시 열 수 있습니다."
+                               Style="{StaticResource SettingsDescriptionTextStyle}" />
+
+                    <TextBlock Text="{Binding AppSettingsErrorMessage}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock"
+                                   BasedOn="{StaticResource SettingsErrorTextStyle}">
+                                <Setter Property="Visibility" Value="Visible" />
+
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding AppSettingsErrorMessage}" Value="">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+
+                                    <DataTrigger Binding="{Binding AppSettingsErrorMessage}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource AppPanelBorderStyle}">
+
+                <StackPanel>
+                    <TextBlock Text="초기화"
+                               Style="{StaticResource SettingsSectionTitleStyle}" />
+
+                    <Button Content="앱 표시 설정 기본값으로 초기화"
+                            Command="{Binding ResetSettingsCommand}"
+                            Style="{StaticResource AppSecondaryButtonStyle}"
+                            HorizontalAlignment="Left"
+                            Margin="0,0,0,10" />
+
+                    <TextBlock Text="항상 위와 작업 표시줄 설정, 창 위치와 크기를 기본값으로 되돌립니다. Windows 시작 프로그램 설정과 일정 데이터는 유지됩니다."
+                               Style="{StaticResource AppSecondaryTextStyle}"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
 </UserControl>
