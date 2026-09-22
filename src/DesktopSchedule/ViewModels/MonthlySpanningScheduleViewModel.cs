@@ -4,10 +4,10 @@ namespace DesktopSchedule.ViewModels;
 
 /// <summary>
 /// 월간 화면에서 사용하는 여러 날짜 연결 일정입니다.
-/// 공통 일정 정보는 SpanningScheduleViewModelBase에서 제공하고,
+/// 공통 일정 정보는 SpanningScheduleViewModel에서 제공하고,
 /// 월간 6주 달력에서 필요한 표시 종료 날짜와 다음 주 연결 상태를 추가로 관리합니다.
 /// </summary>
-public class MonthlySpanningScheduleViewModel : SpanningScheduleViewModelBase
+public class MonthlySpanningScheduleViewModel : SpanningScheduleViewModel
 {
     /// <summary>
     /// 현재 주에서 연결 일정 막대가 표시되는 마지막 날짜입니다.

@@ -28,7 +28,7 @@ public class CalendarSchedulePanel : Panel
 
         foreach (UIElement child in InternalChildren)
         {
-            if (child is FrameworkElement element && element.DataContext is SpanningScheduleViewModelBase schedule)
+            if (child is FrameworkElement element && element.DataContext is SpanningScheduleViewModel schedule)
             {
                 var childWidth = Math.Max(0, schedule.DaySpan * dayColumnWidth - CalendarScheduleMetrics.HorizontalMargin * 2);
 
@@ -60,7 +60,7 @@ public class CalendarSchedulePanel : Panel
 
         foreach (UIElement child in InternalChildren)
         {
-            if (child is not FrameworkElement element || element.DataContext is not SpanningScheduleViewModelBase schedule)
+            if (child is not FrameworkElement element || element.DataContext is not SpanningScheduleViewModel schedule)
             {
                 child.Arrange(new Rect(new Point(), child.DesiredSize));
                 continue;

@@ -26,7 +26,7 @@ public class WeeklyScheduleViewModel : ScheduleEditorViewModelBase
     /// 현재 주에 표시할 모든 일정입니다.
     /// 단일 날짜 일정과 여러 날짜 일정 모두 동일한 공통 Row 구조를 사용합니다.
     /// </summary>
-    public ObservableCollection<WeeklySpanningScheduleViewModel> SpanningSchedules { get; } = new();
+    public ObservableCollection<SpanningScheduleViewModel> SpanningSchedules { get; } = new();
 
     /// <summary>
     /// 현재 주의 일정들이 차지할 전체 화면 높이입니다.
@@ -148,12 +148,7 @@ public class WeeklyScheduleViewModel : ScheduleEditorViewModelBase
 
         foreach (var placement in layout.Placements)
         {
-            SpanningSchedules.Add(new WeeklySpanningScheduleViewModel(
-                placement.Schedule,
-                placement.VisibleStartDate,
-                placement.StartDayIndex,
-                placement.DaySpan,
-                placement.RowIndex));
+            SpanningSchedules.Add(new SpanningScheduleViewModel(placement.Schedule, placement.VisibleStartDate, placement.StartDayIndex, placement.DaySpan, placement.RowIndex));
         }
 
         SpanningAreaHeight = CalendarScheduleMetrics.GetAreaHeight(layout.RowCount);

@@ -1,31 +1,24 @@
-﻿using System.IO;
-using System.Text.Json;
-using System.Windows;
+﻿using System.Windows;
 using Forms = System.Windows.Forms;
 
 namespace DesktopSchedule.Services;
 
 /// <summary>
-/// DesktopSchedule 메인 창의 마지막 정상 위치와 크기를 로컬 파일에 저장하고 복원합니다.
+/// DesktopSchedule 메인 창의 마지막 정상 위치와 크기를 저장하고 복원합니다.
 /// 다중 모니터 환경에서 저장된 위치가 현재 모든 화면 밖에 있다면
 /// 주 모니터의 작업 영역 안으로 안전하게 복구합니다.
 /// </summary>
 public sealed class WindowPlacementService
 {
     private const string FileName = "window-placement.json";
-
-    // 창이 화면에 정상적으로 존재한다고 판단하기 위해 필요한 최소 표시 영역입니다.
     private const double MinimumVisibleWidth = 120.0;
     private const double MinimumVisibleHeight = 80.0;
 
-    private readonly string _filePath;
+    private readonly LocalJsonStore<WindowPlacement> _store;
 
     public WindowPlacementService()
     {
-        var localAppDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        var dataDirectoryPath = Path.Combine(localAppDataPath, "DesktopSchedule");
-
-        _filePath = Path.Combine(dataDirectoryPath, FileName);
+        _store = new LocalJsonStore<WindowPlacement>(FileName);
     }
 
     /// <summary>
@@ -51,23 +44,7 @@ public sealed class WindowPlacementService
             Height = bounds.Height
         };
 
-        var directoryPath = Path.GetDirectoryName(_filePath);
-
-        if (string.IsNullOrWhiteSpace(directoryPath))
-        {
-            throw new InvalidOperationException("창 위치 설정 파일의 저장 경로를 확인할 수 없습니다.");
-        }
-
-        Directory.CreateDirectory(directoryPath);
-
-        var json = JsonSerializer.Serialize(
-            placement,
-            new JsonSerializerOptions
-            {
-                WriteIndented = true
-            });
-
-        File.WriteAllText(_filePath, json);
+        _store.Save(placement);
     }
 
     /// <summary>
@@ -79,7 +56,7 @@ public sealed class WindowPlacementService
     {
         ArgumentNullException.ThrowIfNull(window);
 
-        var placement = Load();
+        var placement = _store.Load();
 
         if (placement is null)
         {
@@ -112,36 +89,6 @@ public sealed class WindowPlacementService
         }
 
         MoveToPrimaryScreenCenter(window, width, height);
-    }
-
-    /// <summary>
-    /// 저장 파일에서 MainWindow 위치와 크기를 읽습니다.
-    /// 파일이 없거나 손상되었거나 접근할 수 없으면 null을 반환합니다.
-    /// </summary>
-    private WindowPlacement? Load()
-    {
-        if (!File.Exists(_filePath))
-        {
-            return null;
-        }
-
-        try
-        {
-            var json = File.ReadAllText(_filePath);
-            return JsonSerializer.Deserialize<WindowPlacement>(json);
-        }
-        catch (IOException)
-        {
-            return null;
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return null;
-        }
-        catch (JsonException)
-        {
-            return null;
-        }
     }
 
     /// <summary>
@@ -234,18 +181,16 @@ public sealed class WindowPlacementService
                bounds.Width > 0 &&
                bounds.Height > 0;
     }
-}
 
-/// <summary>
-/// 저장 파일에 기록되는 MainWindow 위치와 크기 데이터입니다.
-/// </summary>
-public sealed class WindowPlacement
-{
-    public double Left { get; set; }
-
-    public double Top { get; set; }
-
-    public double Width { get; set; }
-
-    public double Height { get; set; }
+    /// <summary>
+    /// 창 위치 저장 파일에 기록되는 내부 데이터 형식입니다.
+    /// WindowPlacementService 외부에서는 사용할 필요가 없으므로 비공개로 유지합니다.
+    /// </summary>
+    private sealed class WindowPlacement
+    {
+        public double Left { get; set; }
+        public double Top { get; set; }
+        public double Width { get; set; }
+        public double Height { get; set; }
+    }
 }

@@ -60,7 +60,7 @@ public sealed class ScheduleDragController
         ArgumentNullException.ThrowIfNull(sourceElement);
         ArgumentNullException.ThrowIfNull(e);
 
-        if (dataContext is not SpanningScheduleViewModelBase scheduleViewModel)
+        if (dataContext is not SpanningScheduleViewModel scheduleViewModel)
         {
             return false;
         }
