@@ -35,9 +35,50 @@
 
                 <DataTrigger Binding="{Binding IsSelected}" Value="True">
                     <Setter Property="Background" Value="{StaticResource PrimaryLightBrush}" />
-                    <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
+                    <Setter Property="BorderBrush" Value="{StaticResource ScheduleBorderBrush}" />
                     <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
                     <Setter Property="FontWeight" Value="SemiBold" />
+                </DataTrigger>
+
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding IsSelected}" Value="True" />
+                        <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True" />
+                    </MultiDataTrigger.Conditions>
+
+                    <Setter Property="Background" Value="{StaticResource ScheduleBackgroundBrush}" />
+                    <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
+                </MultiDataTrigger>
+
+                <DataTrigger Binding="{Binding IsDropTarget}" Value="True">
+                    <Setter Property="Background" Value="#E6F4EA" />
+                    <Setter Property="BorderBrush" Value="#66A879" />
+                    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+                    <Setter Property="FontWeight" Value="SemiBold" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="WeeklyDayBodyStyle"
+               TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource DividerBrush}" />
+            <Setter Property="BorderThickness" Value="0,0,1,0" />
+
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsToday}" Value="True">
+                    <Setter Property="Background" Value="#F8FBFF" />
+                </DataTrigger>
+
+                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                    <Setter Property="Background" Value="{StaticResource PrimaryLightBrush}" />
+                    <Setter Property="BorderBrush" Value="{StaticResource ScheduleBorderBrush}" />
+                </DataTrigger>
+
+                <DataTrigger Binding="{Binding IsDropTarget}" Value="True">
+                    <Setter Property="Background" Value="#E6F4EA" />
+                    <Setter Property="BorderBrush" Value="#66A879" />
+                    <Setter Property="BorderThickness" Value="1" />
                 </DataTrigger>
             </Style.Triggers>
         </Style>
@@ -177,26 +218,7 @@
 
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Border BorderBrush="{StaticResource DividerBrush}"
-                                                    BorderThickness="0,0,1,0">
-
-                                                <Border.Style>
-                                                    <Style TargetType="Border">
-                                                        <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
-
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsToday}" Value="True">
-                                                                <Setter Property="Background" Value="#F8FBFF" />
-                                                            </DataTrigger>
-
-                                                            <DataTrigger Binding="{Binding IsDropTarget}" Value="True">
-                                                                <Setter Property="Background" Value="#E6F4EA" />
-                                                                <Setter Property="BorderBrush" Value="#66A879" />
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Border.Style>
-                                            </Border>
+                                            <Border Style="{StaticResource WeeklyDayBodyStyle}" />
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>

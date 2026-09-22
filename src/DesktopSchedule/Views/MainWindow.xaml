@@ -45,12 +45,39 @@
             <Setter Property="Margin" Value="6,0,0,0" />
 
             <Style.Triggers>
-                <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="True">
+                <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}"
+                             Value="True">
                     <Setter Property="Background" Value="{StaticResource PrimaryLightBrush}" />
                     <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
                     <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
                     <Setter Property="FontWeight" Value="SemiBold" />
                 </DataTrigger>
+
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding Tag, RelativeSource={RelativeSource Self}}"
+                                   Value="True" />
+                        <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}"
+                                   Value="True" />
+                    </MultiDataTrigger.Conditions>
+
+                    <Setter Property="Background" Value="{StaticResource ScheduleBackgroundBrush}" />
+                    <Setter Property="BorderBrush" Value="{StaticResource PrimaryHoverBrush}" />
+                    <Setter Property="Foreground" Value="{StaticResource PrimaryHoverBrush}" />
+                </MultiDataTrigger>
+
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding Tag, RelativeSource={RelativeSource Self}}"
+                                   Value="True" />
+                        <Condition Binding="{Binding IsPressed, RelativeSource={RelativeSource Self}}"
+                                   Value="True" />
+                    </MultiDataTrigger.Conditions>
+
+                    <Setter Property="Background" Value="{StaticResource ScheduleBackgroundBrush}" />
+                    <Setter Property="BorderBrush" Value="{StaticResource PrimaryPressedBrush}" />
+                    <Setter Property="Foreground" Value="{StaticResource PrimaryPressedBrush}" />
+                </MultiDataTrigger>
             </Style.Triggers>
         </Style>
     </Window.Resources>
@@ -61,7 +88,9 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Margin="0,0,0,16">
+        <Grid Grid.Row="0"
+              Margin="0,0,0,16">
+
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />

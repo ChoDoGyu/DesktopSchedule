@@ -76,6 +76,7 @@
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="TextTrimming" Value="CharacterEllipsis" />
         <Setter Property="TextWrapping" Value="NoWrap" />
+
         <Style.Triggers>
             <DataTrigger Binding="{Binding IsCompleted}" Value="True">
                 <Setter Property="Foreground" Value="{StaticResource CompletedTextBrush}" />
@@ -93,6 +94,7 @@
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="HorizontalContentAlignment" Value="Center" />
+
         <Style.Triggers>
             <Trigger Property="IsEnabled" Value="False">
                 <Setter Property="Opacity" Value="0.45" />
@@ -108,15 +110,27 @@
         <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
         <Setter Property="Foreground" Value="White" />
         <Setter Property="FontWeight" Value="SemiBold" />
+
         <Style.Triggers>
-            <Trigger Property="IsMouseOver" Value="True">
+            <MultiTrigger>
+                <MultiTrigger.Conditions>
+                    <Condition Property="IsEnabled" Value="True" />
+                    <Condition Property="IsMouseOver" Value="True" />
+                </MultiTrigger.Conditions>
+
                 <Setter Property="Background" Value="{StaticResource PrimaryHoverBrush}" />
                 <Setter Property="BorderBrush" Value="{StaticResource PrimaryHoverBrush}" />
-            </Trigger>
-            <Trigger Property="IsPressed" Value="True">
+            </MultiTrigger>
+
+            <MultiTrigger>
+                <MultiTrigger.Conditions>
+                    <Condition Property="IsEnabled" Value="True" />
+                    <Condition Property="IsPressed" Value="True" />
+                </MultiTrigger.Conditions>
+
                 <Setter Property="Background" Value="{StaticResource PrimaryPressedBrush}" />
                 <Setter Property="BorderBrush" Value="{StaticResource PrimaryPressedBrush}" />
-            </Trigger>
+            </MultiTrigger>
         </Style.Triggers>
     </Style>
 
@@ -126,14 +140,27 @@
         <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
         <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+
         <Style.Triggers>
-            <Trigger Property="IsMouseOver" Value="True">
+            <MultiTrigger>
+                <MultiTrigger.Conditions>
+                    <Condition Property="IsEnabled" Value="True" />
+                    <Condition Property="IsMouseOver" Value="True" />
+                </MultiTrigger.Conditions>
+
                 <Setter Property="Background" Value="{StaticResource PrimaryLightBrush}" />
                 <Setter Property="BorderBrush" Value="{StaticResource ScheduleBorderBrush}" />
-            </Trigger>
-            <Trigger Property="IsPressed" Value="True">
+            </MultiTrigger>
+
+            <MultiTrigger>
+                <MultiTrigger.Conditions>
+                    <Condition Property="IsEnabled" Value="True" />
+                    <Condition Property="IsPressed" Value="True" />
+                </MultiTrigger.Conditions>
+
                 <Setter Property="Background" Value="{StaticResource ScheduleBackgroundBrush}" />
-            </Trigger>
+                <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
+            </MultiTrigger>
         </Style.Triggers>
     </Style>
 
@@ -153,13 +180,26 @@
         <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{StaticResource DangerBrush}" />
         <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+
         <Style.Triggers>
-            <Trigger Property="IsMouseOver" Value="True">
+            <MultiTrigger>
+                <MultiTrigger.Conditions>
+                    <Condition Property="IsEnabled" Value="True" />
+                    <Condition Property="IsMouseOver" Value="True" />
+                </MultiTrigger.Conditions>
+
                 <Setter Property="Background" Value="{StaticResource DangerLightBrush}" />
-            </Trigger>
-            <Trigger Property="IsPressed" Value="True">
+            </MultiTrigger>
+
+            <MultiTrigger>
+                <MultiTrigger.Conditions>
+                    <Condition Property="IsEnabled" Value="True" />
+                    <Condition Property="IsPressed" Value="True" />
+                </MultiTrigger.Conditions>
+
+                <Setter Property="Background" Value="{StaticResource DangerLightBrush}" />
                 <Setter Property="Opacity" Value="0.8" />
-            </Trigger>
+            </MultiTrigger>
         </Style.Triggers>
     </Style>
 
@@ -182,6 +222,7 @@
                             BorderThickness="{TemplateBinding BorderThickness}"
                             CornerRadius="4"
                             Padding="{TemplateBinding Padding}">
+
                         <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                           VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
                     </Border>
@@ -190,16 +231,21 @@
         </Setter>
 
         <Style.Triggers>
-            <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
-            </Trigger>
-
             <DataTrigger Binding="{Binding IsCompleted}" Value="True">
                 <Setter Property="Background" Value="{StaticResource CompletedBackgroundBrush}" />
                 <Setter Property="BorderBrush" Value="{StaticResource CompletedBorderBrush}" />
                 <Setter Property="Foreground" Value="{StaticResource CompletedTextBrush}" />
                 <Setter Property="Opacity" Value="0.72" />
             </DataTrigger>
+
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
+            </Trigger>
+
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.45" />
+                <Setter Property="Cursor" Value="Arrow" />
+            </Trigger>
         </Style.Triggers>
     </Style>
 
@@ -221,15 +267,15 @@
         <Setter Property="Opacity" Value="1" />
 
         <Style.Triggers>
-            <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
-            </Trigger>
-
             <DataTrigger Binding="{Binding IsCompleted}" Value="True">
                 <Setter Property="Background" Value="{StaticResource CompletedBackgroundBrush}" />
                 <Setter Property="BorderBrush" Value="{StaticResource CompletedBorderBrush}" />
                 <Setter Property="Opacity" Value="0.72" />
             </DataTrigger>
+
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
+            </Trigger>
         </Style.Triggers>
     </Style>
 
@@ -243,12 +289,21 @@
         <Setter Property="MinHeight" Value="32" />
         <Setter Property="Padding" Value="8,5" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
+
         <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="BorderBrush" Value="{StaticResource ScheduleBorderBrush}" />
+            </Trigger>
+
             <Trigger Property="IsKeyboardFocusWithin" Value="True">
                 <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
             </Trigger>
+
             <Trigger Property="IsEnabled" Value="False">
-                <Setter Property="Opacity" Value="0.55" />
+                <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+                <Setter Property="Background" Value="{StaticResource AppBackgroundBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource DividerBrush}" />
+                <Setter Property="Opacity" Value="0.65" />
             </Trigger>
         </Style.Triggers>
     </Style>
@@ -263,12 +318,21 @@
         <Setter Property="MinHeight" Value="32" />
         <Setter Property="Padding" Value="8,4" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
+
         <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="BorderBrush" Value="{StaticResource ScheduleBorderBrush}" />
+            </Trigger>
+
             <Trigger Property="IsKeyboardFocusWithin" Value="True">
                 <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
             </Trigger>
+
             <Trigger Property="IsEnabled" Value="False">
-                <Setter Property="Opacity" Value="0.55" />
+                <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+                <Setter Property="Background" Value="{StaticResource AppBackgroundBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource DividerBrush}" />
+                <Setter Property="Opacity" Value="0.65" />
             </Trigger>
         </Style.Triggers>
     </Style>
@@ -278,6 +342,19 @@
         <Setter Property="FontSize" Value="13" />
         <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Cursor" Value="Hand" />
+
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+            </Trigger>
+
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+                <Setter Property="Opacity" Value="0.55" />
+                <Setter Property="Cursor" Value="Arrow" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <Style x:Key="AppPanelBorderStyle" TargetType="Border">
