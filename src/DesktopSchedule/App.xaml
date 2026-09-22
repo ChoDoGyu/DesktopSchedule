@@ -6,6 +6,7 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/DesktopSchedule;component/Resources/AppStyles.xaml" />
                 <ResourceDictionary Source="/DesktopSchedule;component/Resources/DatePickerStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
