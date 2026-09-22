@@ -116,6 +116,7 @@ public partial class DailyView : UserControl
 
     /// <summary>
     /// 오른쪽 일정 목록 Drag 중 반대쪽 완료 상태 영역을 Drop 대상으로 강조합니다.
+    /// 공통 Drop Target Resource를 사용해 다른 달력 화면과 동일한 상태 표현을 유지합니다.
     /// </summary>
     private void UpdateScheduleListDropTarget(Point dragSurfacePosition)
     {
@@ -126,12 +127,22 @@ public partial class DailyView : UserControl
 
         if (target == DailyDragSource.IncompleteList)
         {
-            IncompleteScheduleArea.Background = Brushes.AliceBlue;
+            ApplyScheduleListDropTargetHighlight(IncompleteScheduleArea);
         }
         else if (target == DailyDragSource.CompletedList)
         {
-            CompletedScheduleArea.Background = Brushes.AliceBlue;
+            ApplyScheduleListDropTargetHighlight(CompletedScheduleArea);
         }
+    }
+
+    /// <summary>
+    /// 지정한 일정 목록 영역을 현재 Drop 대상으로 표시합니다.
+    /// 색상을 코드에 직접 지정하지 않고 AppStyles의 공통 Resource를 참조합니다.
+    /// </summary>
+    private static void ApplyScheduleListDropTargetHighlight(Border target)
+    {
+        target.SetResourceReference(Border.BackgroundProperty, "DropTargetBackgroundBrush");
+        target.SetResourceReference(Border.BorderBrushProperty, "DropTargetBorderBrush");
     }
 
     /// <summary>
@@ -318,12 +329,21 @@ public partial class DailyView : UserControl
     }
 
     /// <summary>
-    /// 할 일과 완료한 일 영역의 Drop 강조를 제거합니다.
+    /// 할 일과 완료한 일 영역의 Drop 강조를 제거하고 기본 Border 상태로 되돌립니다.
     /// </summary>
     private void ClearScheduleListDropTarget()
     {
-        IncompleteScheduleArea.Background = Brushes.Transparent;
-        CompletedScheduleArea.Background = Brushes.Transparent;
+        ResetScheduleListDropTargetHighlight(IncompleteScheduleArea);
+        ResetScheduleListDropTargetHighlight(CompletedScheduleArea);
+    }
+
+    /// <summary>
+    /// Drop 대상 표시가 끝난 일정 목록 영역의 배경과 Border를 기본 상태로 복원합니다.
+    /// </summary>
+    private static void ResetScheduleListDropTargetHighlight(Border target)
+    {
+        target.Background = Brushes.Transparent;
+        target.SetResourceReference(Border.BorderBrushProperty, "BorderBrush");
     }
 
     private enum DailyDragSource

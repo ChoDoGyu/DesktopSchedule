@@ -16,7 +16,6 @@
                TargetType="Border"
                BasedOn="{StaticResource AppPanelBorderStyle}">
             <Setter Property="Padding" Value="0" />
-            <Setter Property="CornerRadius" Value="8" />
         </Style>
     </UserControl.Resources>
 
@@ -149,8 +148,8 @@
                                             Margin="52,0,8,0"
                                             HorizontalAlignment="Stretch"
                                             VerticalAlignment="Top"
-                                            Background="#E6F4EA"
-                                            BorderBrush="#66A879"
+                                            Background="{StaticResource DropTargetBackgroundBrush}"
+                                            BorderBrush="{StaticResource DropTargetBorderBrush}"
                                             BorderThickness="1"
                                             Opacity="0.72"
                                             Visibility="Collapsed"

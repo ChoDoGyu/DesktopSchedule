@@ -56,7 +56,7 @@
                             Padding="7,3">
 
                         <TextBlock Text="일정 알림"
-                                   FontSize="11"
+                                   Style="{StaticResource AppCaptionTextStyle}"
                                    FontWeight="SemiBold"
                                    Foreground="{StaticResource PrimaryBrush}" />
                     </Border>
@@ -70,9 +70,7 @@
 
                 <TextBlock x:Name="ScheduleTitleTextBlock"
                            Grid.Row="2"
-                           FontSize="17"
-                           FontWeight="SemiBold"
-                           Foreground="{StaticResource TextPrimaryBrush}"
+                           Style="{StaticResource AppSectionTitleTextStyle}"
                            VerticalAlignment="Top"
                            TextTrimming="CharacterEllipsis"
                            TextWrapping="NoWrap" />

@@ -25,7 +25,7 @@
 
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#F8FBFF" />
+                    <Setter Property="Background" Value="{StaticResource HoverSurfaceBrush}" />
                 </Trigger>
 
                 <DataTrigger Binding="{Binding IsToday}" Value="True">
@@ -51,8 +51,8 @@
                 </MultiDataTrigger>
 
                 <DataTrigger Binding="{Binding IsDropTarget}" Value="True">
-                    <Setter Property="Background" Value="#E6F4EA" />
-                    <Setter Property="BorderBrush" Value="#66A879" />
+                    <Setter Property="Background" Value="{StaticResource DropTargetBackgroundBrush}" />
+                    <Setter Property="BorderBrush" Value="{StaticResource DropTargetBorderBrush}" />
                     <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
                     <Setter Property="FontWeight" Value="SemiBold" />
                 </DataTrigger>
@@ -67,7 +67,7 @@
 
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsToday}" Value="True">
-                    <Setter Property="Background" Value="#F8FBFF" />
+                    <Setter Property="Background" Value="{StaticResource HoverSurfaceBrush}" />
                 </DataTrigger>
 
                 <DataTrigger Binding="{Binding IsSelected}" Value="True">
@@ -76,8 +76,8 @@
                 </DataTrigger>
 
                 <DataTrigger Binding="{Binding IsDropTarget}" Value="True">
-                    <Setter Property="Background" Value="#E6F4EA" />
-                    <Setter Property="BorderBrush" Value="#66A879" />
+                    <Setter Property="Background" Value="{StaticResource DropTargetBackgroundBrush}" />
+                    <Setter Property="BorderBrush" Value="{StaticResource DropTargetBorderBrush}" />
                     <Setter Property="BorderThickness" Value="1" />
                 </DataTrigger>
             </Style.Triggers>

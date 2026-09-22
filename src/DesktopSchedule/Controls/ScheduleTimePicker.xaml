@@ -7,7 +7,6 @@
         <Style x:Key="TimePickerOpenButtonStyle"
                TargetType="Button"
                BasedOn="{StaticResource AppSecondaryButtonStyle}">
-            <Setter Property="MinHeight" Value="32" />
             <Setter Property="Padding" Value="8,4" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         </Style>
@@ -36,9 +35,7 @@
 
                 <TextBlock x:Name="DisplayTextBlock"
                            Grid.Column="0"
-                           FontFamily="{StaticResource AppFontFamily}"
-                           FontSize="13"
-                           Foreground="{StaticResource TextPrimaryBrush}"
+                           Style="{StaticResource AppBodyTextStyle}"
                            VerticalAlignment="Center" />
 
                 <TextBlock Grid.Column="1"

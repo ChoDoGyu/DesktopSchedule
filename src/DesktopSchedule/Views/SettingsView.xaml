@@ -23,9 +23,9 @@
         </Style>
 
         <Style x:Key="SettingsErrorTextStyle"
-               TargetType="TextBlock">
+               TargetType="TextBlock"
+               BasedOn="{StaticResource AppSecondaryTextStyle}">
             <Setter Property="Foreground" Value="{StaticResource ErrorBrush}" />
-            <Setter Property="FontSize" Value="12" />
             <Setter Property="TextWrapping" Value="Wrap" />
             <Setter Property="Margin" Value="24,8,0,0" />
         </Style>

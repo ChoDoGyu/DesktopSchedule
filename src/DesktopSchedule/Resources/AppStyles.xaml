@@ -10,6 +10,7 @@
 
     <SolidColorBrush x:Key="BorderBrush" Color="#E1E4E8" />
     <SolidColorBrush x:Key="DividerBrush" Color="#ECEEF1" />
+    <SolidColorBrush x:Key="HoverSurfaceBrush" Color="#F8FBFF" />
 
     <SolidColorBrush x:Key="PrimaryBrush" Color="#4A90E2" />
     <SolidColorBrush x:Key="PrimaryHoverBrush" Color="#3D7FCB" />
@@ -22,6 +23,9 @@
     <SolidColorBrush x:Key="CompletedBackgroundBrush" Color="#F0F1F3" />
     <SolidColorBrush x:Key="CompletedBorderBrush" Color="#C9CDD2" />
     <SolidColorBrush x:Key="CompletedTextBrush" Color="#7A7F87" />
+
+    <SolidColorBrush x:Key="DropTargetBackgroundBrush" Color="#E6F4EA" />
+    <SolidColorBrush x:Key="DropTargetBorderBrush" Color="#66A879" />
 
     <SolidColorBrush x:Key="DangerBrush" Color="#D9534F" />
     <SolidColorBrush x:Key="DangerLightBrush" Color="#FDECEC" />
