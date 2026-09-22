@@ -10,11 +10,14 @@ namespace DesktopSchedule.Services;
 /// </summary>
 public sealed class TrayIconService : IDisposable
 {
+    private const string TrayIconResourcePath = "pack://application:,,,/Resources/Icons/DesktopSchedule.ico";
+
     private readonly Window _mainWindow;
     private readonly Action _exitApplication;
     private readonly Forms.NotifyIcon _trayIcon;
     private readonly Forms.ContextMenuStrip _trayMenu;
     private readonly Forms.ToolStripMenuItem _trayWindowMenuItem;
+    private readonly System.Drawing.Icon _trayIconImage;
 
     private bool _isExiting;
     private bool _isDisposed;
@@ -23,6 +26,8 @@ public sealed class TrayIconService : IDisposable
     {
         _mainWindow = mainWindow ?? throw new ArgumentNullException(nameof(mainWindow));
         _exitApplication = exitApplication ?? throw new ArgumentNullException(nameof(exitApplication));
+
+        _trayIconImage = LoadTrayIcon();
 
         _trayMenu = new Forms.ContextMenuStrip();
 
@@ -38,7 +43,7 @@ public sealed class TrayIconService : IDisposable
         _trayIcon = new Forms.NotifyIcon
         {
             Text = "DesktopSchedule",
-            Icon = System.Drawing.SystemIcons.Application,
+            Icon = _trayIconImage,
             ContextMenuStrip = _trayMenu,
             Visible = true
         };
@@ -50,6 +55,26 @@ public sealed class TrayIconService : IDisposable
         _mainWindow.StateChanged += MainWindow_StateChanged;
 
         UpdateWindowMenuText();
+    }
+
+    /// <summary>
+    /// 애플리케이션 리소스에 포함된 DesktopSchedule 전용 트레이 아이콘을 불러옵니다.
+    /// 원본 Stream과 독립적으로 사용할 수 있도록 Icon을 복제하여 반환합니다.
+    /// </summary>
+    private static System.Drawing.Icon LoadTrayIcon()
+    {
+        var resourceUri = new Uri(TrayIconResourcePath, UriKind.Absolute);
+        var resourceInfo = Application.GetResourceStream(resourceUri);
+
+        if (resourceInfo is null)
+        {
+            throw new InvalidOperationException("트레이 아이콘 리소스를 찾을 수 없습니다.");
+        }
+
+        using var stream = resourceInfo.Stream;
+        using var icon = new System.Drawing.Icon(stream);
+
+        return (System.Drawing.Icon)icon.Clone();
     }
 
     /// <summary>
@@ -167,9 +192,7 @@ public sealed class TrayIconService : IDisposable
     /// </summary>
     private void UpdateWindowMenuText()
     {
-        _trayWindowMenuItem.Text = IsMainWindowDisplayed()
-            ? "숨기기"
-            : "열기";
+        _trayWindowMenuItem.Text = IsMainWindowDisplayed() ? "숨기기" : "열기";
     }
 
     /// <summary>
@@ -205,6 +228,8 @@ public sealed class TrayIconService : IDisposable
         _trayIcon.MouseClick -= TrayIcon_MouseClick;
         _trayIcon.Visible = false;
         _trayIcon.Dispose();
+
+        _trayIconImage.Dispose();
 
         _trayWindowMenuItem.Click -= TrayWindowMenuItem_Click;
 

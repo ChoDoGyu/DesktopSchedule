@@ -7,6 +7,7 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<UseWPF>true</UseWPF>
 		<UseWindowsForms>true</UseWindowsForms>
+		<ApplicationIcon>Resources\Icons\DesktopSchedule.ico</ApplicationIcon>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -16,6 +17,11 @@
 
 	<ItemGroup>
 		<Folder Include="Converters\" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Remove="Resources\Icons\DesktopSchedule.ico" />
+		<Resource Include="Resources\Icons\DesktopSchedule.ico" />
 	</ItemGroup>
 
 	<ItemGroup>
