@@ -10,46 +10,79 @@
         ShowActivated="False"
         Topmost="True"
         AllowsTransparency="True"
-        Background="Transparent">
+        Background="Transparent"
+        FontFamily="{StaticResource AppFontFamily}">
 
-    <Border Background="White"
-            BorderBrush="LightGray"
-            BorderThickness="1"
-            CornerRadius="10"
-            Padding="18">
+    <Border Style="{StaticResource AppPopupBorderStyle}"
+            Padding="0">
 
         <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="4" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
-            <TextBlock Grid.Row="0"
-                       Text="DesktopSchedule"
-                       FontSize="14"
-                       FontWeight="SemiBold"
-                       Foreground="DimGray"
-                       Margin="0,0,0,8" />
+            <Border Grid.Column="0"
+                    Background="{StaticResource PrimaryBrush}"
+                    CornerRadius="10,0,0,10" />
 
-            <TextBlock Grid.Row="1"
-                       Text="곧 일정이 시작됩니다."
-                       FontSize="13"
-                       Margin="0,0,0,6" />
+            <Grid Grid.Column="1"
+                  Margin="16,14,16,14">
 
-            <TextBlock x:Name="ScheduleTitleTextBlock"
-                       Grid.Row="2"
-                       FontSize="17"
-                       FontWeight="SemiBold"
-                       TextTrimming="CharacterEllipsis"
-                       Margin="0,0,0,6" />
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-            <TextBlock x:Name="ScheduleTimeTextBlock"
-                       Grid.Row="3"
-                       FontSize="13"
-                       Foreground="DimGray"
-                       VerticalAlignment="Bottom" />
+                <Grid Grid.Row="0"
+                      Margin="0,0,0,8">
+
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0"
+                               Text="DesktopSchedule"
+                               Style="{StaticResource AppSecondaryTextStyle}"
+                               FontWeight="SemiBold"
+                               VerticalAlignment="Center" />
+
+                    <Border Grid.Column="1"
+                            Background="{StaticResource PrimaryLightBrush}"
+                            CornerRadius="4"
+                            Padding="7,3">
+
+                        <TextBlock Text="일정 알림"
+                                   FontSize="11"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource PrimaryBrush}" />
+                    </Border>
+                </Grid>
+
+                <TextBlock Grid.Row="1"
+                           Text="곧 일정이 시작됩니다."
+                           Style="{StaticResource AppBodyTextStyle}"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           Margin="0,0,0,5" />
+
+                <TextBlock x:Name="ScheduleTitleTextBlock"
+                           Grid.Row="2"
+                           FontSize="17"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource TextPrimaryBrush}"
+                           VerticalAlignment="Top"
+                           TextTrimming="CharacterEllipsis"
+                           TextWrapping="NoWrap" />
+
+                <TextBlock x:Name="ScheduleTimeTextBlock"
+                           Grid.Row="3"
+                           Style="{StaticResource AppSecondaryTextStyle}"
+                           VerticalAlignment="Bottom"
+                           Margin="0,6,0,0" />
+            </Grid>
         </Grid>
     </Border>
 </Window>
