@@ -27,7 +27,7 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <Grid Grid.Row="0" Margin="0,0,0,12">
+            <Grid Grid.Row="0" Margin="0,0,0,16">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
@@ -37,70 +37,124 @@
                 <CheckBox Grid.Column="0"
                           Content="완료 일정 보기"
                           IsChecked="{Binding ShowCompletedSchedules}"
+                          Style="{StaticResource AppCheckBoxStyle}"
                           VerticalAlignment="Center"
                           HorizontalAlignment="Left" />
 
-                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center">
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+
                     <Button Content="‹"
                             Command="{Binding PreviousMonthCommand}"
-                            Width="38"
-                            Height="32"
-                            FontSize="18"
+                            Style="{StaticResource AppNavigationButtonStyle}"
                             Margin="0,0,8,0" />
 
                     <TextBlock Text="{Binding DisplayMonthText}"
+                               Style="{StaticResource AppDisplayTitleTextStyle}"
                                Width="140"
-                               FontSize="20"
-                               FontWeight="SemiBold"
                                TextAlignment="Center"
                                VerticalAlignment="Center" />
 
-                    <Button Content="오늘"
-                            Command="{Binding CurrentMonthCommand}"
-                            Padding="12,6"
-                            Margin="8,0" />
-
                     <Button Content="›"
                             Command="{Binding NextMonthCommand}"
-                            Width="38"
-                            Height="32"
-                            FontSize="18" />
+                            Style="{StaticResource AppNavigationButtonStyle}"
+                            Margin="8,0,0,0" />
+
+                    <Button Content="오늘"
+                            Command="{Binding CurrentMonthCommand}"
+                            Style="{StaticResource AppSecondaryButtonStyle}"
+                            Margin="8,0,0,0" />
                 </StackPanel>
 
                 <Button Grid.Column="2"
                         Content="새 일정"
                         Command="{Binding OpenNewScheduleCommand}"
-                        HorizontalAlignment="Right"
-                        Padding="14,7" />
+                        Style="{StaticResource AppPrimaryButtonStyle}"
+                        HorizontalAlignment="Right" />
             </Grid>
 
-            <UniformGrid Grid.Row="1" Rows="1" Columns="7" Margin="0,0,0,4">
-                <Border BorderBrush="#D8D8D8" BorderThickness="1" Padding="8,6">
-                    <TextBlock Text="일" HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="#D45454" />
+            <UniformGrid Grid.Row="1"
+                         Rows="1"
+                         Columns="7"
+                         Margin="0,0,0,4">
+
+                <Border Background="{StaticResource AppBackgroundBrush}"
+                        BorderBrush="{StaticResource DividerBrush}"
+                        BorderThickness="0,0,0,1"
+                        Padding="8,7">
+                    <TextBlock Text="일"
+                               HorizontalAlignment="Center"
+                               FontSize="13"
+                               FontWeight="SemiBold"
+                               Foreground="#D45454" />
                 </Border>
 
-                <Border BorderBrush="#D8D8D8" BorderThickness="1" Padding="8,6">
-                    <TextBlock Text="월" HorizontalAlignment="Center" FontWeight="SemiBold" />
+                <Border Background="{StaticResource AppBackgroundBrush}"
+                        BorderBrush="{StaticResource DividerBrush}"
+                        BorderThickness="0,0,0,1"
+                        Padding="8,7">
+                    <TextBlock Text="월"
+                               HorizontalAlignment="Center"
+                               FontSize="13"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource TextSecondaryBrush}" />
                 </Border>
 
-                <Border BorderBrush="#D8D8D8" BorderThickness="1" Padding="8,6">
-                    <TextBlock Text="화" HorizontalAlignment="Center" FontWeight="SemiBold" />
+                <Border Background="{StaticResource AppBackgroundBrush}"
+                        BorderBrush="{StaticResource DividerBrush}"
+                        BorderThickness="0,0,0,1"
+                        Padding="8,7">
+                    <TextBlock Text="화"
+                               HorizontalAlignment="Center"
+                               FontSize="13"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource TextSecondaryBrush}" />
                 </Border>
 
-                <Border BorderBrush="#D8D8D8" BorderThickness="1" Padding="8,6">
-                    <TextBlock Text="수" HorizontalAlignment="Center" FontWeight="SemiBold" />
+                <Border Background="{StaticResource AppBackgroundBrush}"
+                        BorderBrush="{StaticResource DividerBrush}"
+                        BorderThickness="0,0,0,1"
+                        Padding="8,7">
+                    <TextBlock Text="수"
+                               HorizontalAlignment="Center"
+                               FontSize="13"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource TextSecondaryBrush}" />
                 </Border>
 
-                <Border BorderBrush="#D8D8D8" BorderThickness="1" Padding="8,6">
-                    <TextBlock Text="목" HorizontalAlignment="Center" FontWeight="SemiBold" />
+                <Border Background="{StaticResource AppBackgroundBrush}"
+                        BorderBrush="{StaticResource DividerBrush}"
+                        BorderThickness="0,0,0,1"
+                        Padding="8,7">
+                    <TextBlock Text="목"
+                               HorizontalAlignment="Center"
+                               FontSize="13"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource TextSecondaryBrush}" />
                 </Border>
 
-                <Border BorderBrush="#D8D8D8" BorderThickness="1" Padding="8,6">
-                    <TextBlock Text="금" HorizontalAlignment="Center" FontWeight="SemiBold" />
+                <Border Background="{StaticResource AppBackgroundBrush}"
+                        BorderBrush="{StaticResource DividerBrush}"
+                        BorderThickness="0,0,0,1"
+                        Padding="8,7">
+                    <TextBlock Text="금"
+                               HorizontalAlignment="Center"
+                               FontSize="13"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource TextSecondaryBrush}" />
                 </Border>
 
-                <Border BorderBrush="#D8D8D8" BorderThickness="1" Padding="8,6">
-                    <TextBlock Text="토" HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="#4D72C9" />
+                <Border Background="{StaticResource AppBackgroundBrush}"
+                        BorderBrush="{StaticResource DividerBrush}"
+                        BorderThickness="0,0,0,1"
+                        Padding="8,7">
+                    <TextBlock Text="토"
+                               HorizontalAlignment="Center"
+                               FontSize="13"
+                               FontWeight="SemiBold"
+                               Foreground="#4D72C9" />
                 </Border>
             </UniformGrid>
 
@@ -109,6 +163,7 @@
                     <Grid.Style>
                         <Style TargetType="Grid">
                             <Setter Property="Visibility" Value="Visible" />
+
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding IsEditorOpen}" Value="True">
                                     <Setter Property="Visibility" Value="Collapsed" />
@@ -117,7 +172,9 @@
                         </Style>
                     </Grid.Style>
 
-                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+
                         <ItemsControl x:Name="MonthCalendarArea"
                                       ItemsSource="{Binding Weeks}"
                                       HorizontalContentAlignment="Stretch">
@@ -131,7 +188,10 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Grid MinHeight="112">
-                                        <ItemsControl ItemsSource="{Binding Days}" HorizontalContentAlignment="Stretch">
+
+                                        <ItemsControl ItemsSource="{Binding Days}"
+                                                      HorizontalContentAlignment="Stretch">
+
                                             <ItemsControl.ItemsPanel>
                                                 <ItemsPanelTemplate>
                                                     <UniformGrid Rows="1" Columns="7" />
@@ -140,38 +200,41 @@
 
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
-                                                    <Border BorderBrush="#D8D8D8"
-                                                            BorderThickness="1"
-                                                            MinHeight="112"
+                                                    <Border MinHeight="112"
                                                             Cursor="Hand"
                                                             MouseLeftButtonUp="CalendarDay_MouseLeftButtonUp">
 
                                                         <Border.Style>
                                                             <Style TargetType="Border">
-                                                                <Setter Property="Background" Value="White" />
-                                                                <Setter Property="BorderBrush" Value="#D8D8D8" />
+                                                                <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+                                                                <Setter Property="BorderBrush" Value="{StaticResource DividerBrush}" />
                                                                 <Setter Property="BorderThickness" Value="1" />
                                                                 <Setter Property="Opacity" Value="1" />
 
                                                                 <Style.Triggers>
+                                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                                        <Setter Property="Background" Value="#F8FBFF" />
+                                                                    </Trigger>
+
                                                                     <DataTrigger Binding="{Binding IsCurrentMonth}" Value="False">
-                                                                        <Setter Property="Background" Value="#F5F5F5" />
-                                                                        <Setter Property="Opacity" Value="0.62" />
+                                                                        <Setter Property="Background" Value="{StaticResource AppBackgroundBrush}" />
+                                                                        <Setter Property="Opacity" Value="0.6" />
                                                                     </DataTrigger>
 
                                                                     <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                                                        <Setter Property="Background" Value="#EAF3FF" />
+                                                                        <Setter Property="Background" Value="{StaticResource PrimaryLightBrush}" />
                                                                         <Setter Property="Opacity" Value="1" />
                                                                     </DataTrigger>
 
                                                                     <DataTrigger Binding="{Binding IsToday}" Value="True">
-                                                                        <Setter Property="BorderBrush" Value="#4A90E2" />
+                                                                        <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
                                                                         <Setter Property="BorderThickness" Value="2" />
+                                                                        <Setter Property="Opacity" Value="1" />
                                                                     </DataTrigger>
 
                                                                     <DataTrigger Binding="{Binding IsDropTarget}" Value="True">
-                                                                        <Setter Property="Background" Value="#D7F0E2" />
-                                                                        <Setter Property="BorderBrush" Value="#56A675" />
+                                                                        <Setter Property="Background" Value="#E6F4EA" />
+                                                                        <Setter Property="BorderBrush" Value="#66A879" />
                                                                         <Setter Property="BorderThickness" Value="2" />
                                                                         <Setter Property="Opacity" Value="1" />
                                                                     </DataTrigger>
@@ -189,12 +252,13 @@
                                                             <TextBlock Grid.Row="0"
                                                                        Text="{Binding DayText}"
                                                                        Margin="6,4"
+                                                                       FontSize="13"
                                                                        FontWeight="SemiBold"
                                                                        HorizontalAlignment="Right">
 
                                                                 <TextBlock.Style>
                                                                     <Style TargetType="TextBlock">
-                                                                        <Setter Property="Foreground" Value="#333333" />
+                                                                        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
 
                                                                         <Style.Triggers>
                                                                             <DataTrigger Binding="{Binding IsSunday}" Value="True">
@@ -203,6 +267,15 @@
 
                                                                             <DataTrigger Binding="{Binding IsSaturday}" Value="True">
                                                                                 <Setter Property="Foreground" Value="#4D72C9" />
+                                                                            </DataTrigger>
+
+                                                                            <DataTrigger Binding="{Binding IsCurrentMonth}" Value="False">
+                                                                                <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+                                                                            </DataTrigger>
+
+                                                                            <DataTrigger Binding="{Binding IsToday}" Value="True">
+                                                                                <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+                                                                                <Setter Property="FontWeight" Value="Bold" />
                                                                             </DataTrigger>
                                                                         </Style.Triggers>
                                                                     </Style>
@@ -232,7 +305,7 @@
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
                                                     <Border BorderThickness="1"
-                                                            CornerRadius="3"
+                                                            CornerRadius="4"
                                                             Padding="5,2"
                                                             ToolTip="{Binding ToolTipText}"
                                                             Cursor="Hand"
@@ -240,15 +313,19 @@
 
                                                         <Border.Style>
                                                             <Style TargetType="Border">
-                                                                <Setter Property="Background" Value="#DCEBFF" />
-                                                                <Setter Property="BorderBrush" Value="#8CB8F0" />
+                                                                <Setter Property="Background" Value="{StaticResource ScheduleBackgroundBrush}" />
+                                                                <Setter Property="BorderBrush" Value="{StaticResource ScheduleBorderBrush}" />
                                                                 <Setter Property="Opacity" Value="1" />
 
                                                                 <Style.Triggers>
+                                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                                        <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
+                                                                    </Trigger>
+
                                                                     <DataTrigger Binding="{Binding IsCompleted}" Value="True">
-                                                                        <Setter Property="Background" Value="#E7E7E7" />
-                                                                        <Setter Property="BorderBrush" Value="#BDBDBD" />
-                                                                        <Setter Property="Opacity" Value="0.58" />
+                                                                        <Setter Property="Background" Value="{StaticResource CompletedBackgroundBrush}" />
+                                                                        <Setter Property="BorderBrush" Value="{StaticResource CompletedBorderBrush}" />
+                                                                        <Setter Property="Opacity" Value="0.72" />
                                                                     </DataTrigger>
                                                                 </Style.Triggers>
                                                             </Style>
@@ -263,12 +340,11 @@
 
                                                             <TextBlock.Style>
                                                                 <Style TargetType="TextBlock">
-                                                                    <Setter Property="Foreground" Value="#202020" />
+                                                                    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
 
                                                                     <Style.Triggers>
                                                                         <DataTrigger Binding="{Binding IsCompleted}" Value="True">
-                                                                            <Setter Property="Foreground" Value="#666666" />
-                                                                            <Setter Property="TextDecorations" Value="Strikethrough" />
+                                                                            <Setter Property="Foreground" Value="{StaticResource CompletedTextBrush}" />
                                                                         </DataTrigger>
                                                                     </Style.Triggers>
                                                                 </Style>
@@ -285,20 +361,20 @@
                     </ScrollViewer>
                 </Grid>
 
-                <Border BorderBrush="LightGray"
-                        BorderThickness="1"
-                        CornerRadius="6"
-                        Padding="16"
+                <Border Style="{StaticResource AppPanelBorderStyle}"
                         MinWidth="480"
                         MaxWidth="620"
                         HorizontalAlignment="Center"
                         Visibility="{Binding IsEditorOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
+
                     <views:ScheduleEditorView />
                 </Border>
             </Grid>
         </Grid>
 
-        <Canvas IsHitTestVisible="False" Panel.ZIndex="1000">
+        <Canvas IsHitTestVisible="False"
+                Panel.ZIndex="1000">
+
             <controls:ScheduleDragPreview x:Name="DragPreview" />
         </Canvas>
     </Grid>
