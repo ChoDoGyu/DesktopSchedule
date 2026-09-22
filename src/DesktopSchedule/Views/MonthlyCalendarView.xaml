@@ -304,52 +304,12 @@
 
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
-                                                    <Border BorderThickness="1"
-                                                            CornerRadius="4"
-                                                            Padding="5,2"
+                                                    <Border Style="{StaticResource AppScheduleCardBorderStyle}"
                                                             ToolTip="{Binding ToolTipText}"
-                                                            Cursor="Hand"
                                                             PreviewMouseLeftButtonDown="ScheduleElement_PreviewMouseLeftButtonDown">
 
-                                                        <Border.Style>
-                                                            <Style TargetType="Border">
-                                                                <Setter Property="Background" Value="{StaticResource ScheduleBackgroundBrush}" />
-                                                                <Setter Property="BorderBrush" Value="{StaticResource ScheduleBorderBrush}" />
-                                                                <Setter Property="Opacity" Value="1" />
-
-                                                                <Style.Triggers>
-                                                                    <Trigger Property="IsMouseOver" Value="True">
-                                                                        <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
-                                                                    </Trigger>
-
-                                                                    <DataTrigger Binding="{Binding IsCompleted}" Value="True">
-                                                                        <Setter Property="Background" Value="{StaticResource CompletedBackgroundBrush}" />
-                                                                        <Setter Property="BorderBrush" Value="{StaticResource CompletedBorderBrush}" />
-                                                                        <Setter Property="Opacity" Value="0.72" />
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </Border.Style>
-
                                                         <TextBlock Text="{Binding DisplayText}"
-                                                                   FontSize="12"
-                                                                   FontWeight="SemiBold"
-                                                                   VerticalAlignment="Center"
-                                                                   TextTrimming="CharacterEllipsis"
-                                                                   TextWrapping="NoWrap">
-
-                                                            <TextBlock.Style>
-                                                                <Style TargetType="TextBlock">
-                                                                    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
-
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding IsCompleted}" Value="True">
-                                                                            <Setter Property="Foreground" Value="{StaticResource CompletedTextBrush}" />
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </TextBlock.Style>
-                                                        </TextBlock>
+                                                                   Style="{StaticResource AppScheduleCardTextStyle}" />
                                                     </Border>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
