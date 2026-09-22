@@ -25,8 +25,8 @@
             <views:WeeklyScheduleView />
         </DataTemplate>
 
-        <DataTemplate DataType="{x:Type vm:TodoViewModel}">
-            <views:TodoView />
+        <DataTemplate DataType="{x:Type vm:DailyViewModel}">
+            <views:DailyView />
         </DataTemplate>
 
         <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
@@ -62,8 +62,8 @@
                     Margin="4,0"
                     Padding="6" />
 
-            <Button Content="할 일"
-                    Command="{Binding ShowTodoCommand}"
+            <Button Content="일간"
+                    Command="{Binding ShowDailyCommand}"
                     Margin="4,0"
                     Padding="6" />
 

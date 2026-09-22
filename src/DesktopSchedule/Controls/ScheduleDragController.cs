@@ -6,13 +6,15 @@ using DesktopSchedule.ViewModels;
 namespace DesktopSchedule.Controls;
 
 /// <summary>
-/// 주간과 월간 일정 화면에서 공통으로 사용하는 Drag 상태와 동작을 관리합니다.
+/// 월간, 주간, 일간 일정 화면에서 공통으로 사용하는
+/// Drag 상태와 동작을 관리합니다.
 /// Drag 후보 준비, 시작 거리 판정, Mouse Capture, 미리보기 이동,
 /// 원본 요소 표시 상태 복원 및 Drag 종료 처리를 담당합니다.
 /// </summary>
 /// <remarks>
-/// 실제 Drop 대상 날짜를 찾거나 일정을 이동하는 작업은
-/// 각 화면의 달력 구조가 다르므로 해당 View가 담당합니다.
+/// 실제 Drop 대상의 날짜 또는 시간을 계산하거나
+/// 일정을 이동하는 작업은 각 화면 구조가 서로 다르므로
+/// 해당 View와 ViewModel이 담당합니다.
 /// </remarks>
 public sealed class ScheduleDragController
 {
@@ -50,8 +52,8 @@ public sealed class ScheduleDragController
     }
 
     /// <summary>
-    /// 사용자가 일정 요소를 눌렀을 때 클릭 또는 Drag 후보 상태를 준비합니다.
-    /// 공통 일정 ViewModel이 아닌 요소라면 false를 반환합니다.
+    /// 월간 또는 주간의 공통 일정 ViewModel을 이용해
+    /// 클릭 또는 Drag 후보 상태를 준비합니다.
     /// </summary>
     public bool TryPrepareCandidate(FrameworkElement sourceElement, object? dataContext, MouseButtonEventArgs e)
     {
@@ -63,12 +65,32 @@ public sealed class ScheduleDragController
             return false;
         }
 
+        return TryPrepareCandidate(
+            sourceElement,
+            scheduleViewModel.Schedule,
+            scheduleViewModel.DisplayDate,
+            scheduleViewModel.DisplayText,
+            e);
+    }
+
+    /// <summary>
+    /// 일정 데이터와 현재 표시 기준을 직접 전달하여
+    /// 클릭 또는 Drag 후보 상태를 준비합니다.
+    /// 일간 화면처럼 SpanningScheduleViewModelBase를 사용하지 않는 화면에서 재사용합니다.
+    /// </summary>
+    public bool TryPrepareCandidate(FrameworkElement sourceElement, ScheduleItem schedule, DateTime displayDate, string displayText, MouseButtonEventArgs e)
+    {
+        ArgumentNullException.ThrowIfNull(sourceElement);
+        ArgumentNullException.ThrowIfNull(schedule);
+        ArgumentNullException.ThrowIfNull(displayText);
+        ArgumentNullException.ThrowIfNull(e);
+
         _dragStartPoint = e.GetPosition(_dragSurface);
         _dragPointerOffset = e.GetPosition(sourceElement);
 
-        _dragSchedule = scheduleViewModel.Schedule;
-        _dragDisplayDate = scheduleViewModel.DisplayDate;
-        _dragDisplayText = scheduleViewModel.DisplayText;
+        _dragSchedule = schedule;
+        _dragDisplayDate = displayDate.Date;
+        _dragDisplayText = displayText;
         _dragSourceElement = sourceElement;
 
         return true;
@@ -76,12 +98,12 @@ public sealed class ScheduleDragController
 
     /// <summary>
     /// 마우스 이동을 처리하고 필요한 경우 실제 Drag를 시작합니다.
-    /// Drag 중이면 미리보기를 이동하고 현재 달력 위치를 콜백으로 전달합니다.
+    /// Drag 중이면 미리보기를 이동하고 현재 대상 영역의 위치를 콜백으로 전달합니다.
     /// </summary>
-    public bool HandleMouseMove(MouseEventArgs e, IInputElement calendarArea, Action<Point> updateDropTarget)
+    public bool HandleMouseMove(MouseEventArgs e, IInputElement dropArea, Action<Point> updateDropTarget)
     {
         ArgumentNullException.ThrowIfNull(e);
-        ArgumentNullException.ThrowIfNull(calendarArea);
+        ArgumentNullException.ThrowIfNull(dropArea);
         ArgumentNullException.ThrowIfNull(updateDropTarget);
 
         if (_dragSchedule is null || _dragSourceElement is null)
@@ -124,7 +146,7 @@ public sealed class ScheduleDragController
 
         _dragPreview.Move(currentPosition, _dragPointerOffset);
 
-        updateDropTarget(e.GetPosition(calendarArea));
+        updateDropTarget(e.GetPosition(dropArea));
 
         return true;
     }
