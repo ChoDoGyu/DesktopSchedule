@@ -46,7 +46,7 @@ public partial class App : Application
         _reminderScheduler.ReminderDue += ReminderScheduler_ReminderDue;
         _reminderScheduler.Start();
 
-        var mainWindowViewModel = new MainWindowViewModel(scheduleService, startupService, appSettingsService);
+        var mainWindowViewModel = new MainWindowViewModel(scheduleService, startupService, appSettingsService, _windowPlacementService);
 
         _mainWindow = new MainWindow(mainWindowViewModel);
 

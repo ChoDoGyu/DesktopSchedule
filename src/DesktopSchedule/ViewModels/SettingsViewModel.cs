@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using DesktopSchedule.Commands;
 using DesktopSchedule.Services;
 
 namespace DesktopSchedule.ViewModels;
@@ -10,6 +11,7 @@ public class SettingsViewModel : ViewModelBase
 {
     private readonly StartupService _startupService;
     private readonly AppSettingsService _appSettingsService;
+    private readonly WindowPlacementService _windowPlacementService;
 
     private bool _isStartupEnabled;
     private string _startupErrorMessage = string.Empty;
@@ -65,21 +67,7 @@ public class SettingsViewModel : ViewModelBase
                 return;
             }
 
-            try
-            {
-                _appSettingsService.SetIsTopmost(value);
-                AppSettingsErrorMessage = string.Empty;
-            }
-            catch (IOException exception)
-            {
-                AppSettingsErrorMessage = $"설정을 저장하지 못했습니다. {exception.Message}";
-            }
-            catch (UnauthorizedAccessException exception)
-            {
-                AppSettingsErrorMessage = $"설정을 저장하지 못했습니다. {exception.Message}";
-            }
-
-            OnPropertyChanged();
+            ApplyAppSetting(() => _appSettingsService.SetIsTopmost(value), "설정을 저장하지 못했습니다.", nameof(IsTopmost));
         }
     }
 
@@ -97,21 +85,7 @@ public class SettingsViewModel : ViewModelBase
                 return;
             }
 
-            try
-            {
-                _appSettingsService.SetShowInTaskbar(value);
-                AppSettingsErrorMessage = string.Empty;
-            }
-            catch (IOException exception)
-            {
-                AppSettingsErrorMessage = $"설정을 저장하지 못했습니다. {exception.Message}";
-            }
-            catch (UnauthorizedAccessException exception)
-            {
-                AppSettingsErrorMessage = $"설정을 저장하지 못했습니다. {exception.Message}";
-            }
-
-            OnPropertyChanged();
+            ApplyAppSetting(() => _appSettingsService.SetShowInTaskbar(value), "설정을 저장하지 못했습니다.", nameof(ShowInTaskbar));
         }
     }
 
@@ -125,7 +99,7 @@ public class SettingsViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// 애플리케이션 설정 파일 저장에 실패했을 때 표시할 오류 메시지입니다.
+    /// 애플리케이션 설정 저장 또는 초기화에 실패했을 때 표시할 오류 메시지입니다.
     /// </summary>
     public string AppSettingsErrorMessage
     {
@@ -133,10 +107,19 @@ public class SettingsViewModel : ViewModelBase
         private set => SetProperty(ref _appSettingsErrorMessage, value);
     }
 
-    public SettingsViewModel(StartupService startupService, AppSettingsService appSettingsService)
+    /// <summary>
+    /// 앱 표시 설정과 MainWindow 위치 및 크기를 최초 기본값으로 되돌립니다.
+    /// Windows 시작 프로그램 설정과 일정 데이터는 변경하지 않습니다.
+    /// </summary>
+    public RelayCommand ResetSettingsCommand { get; }
+
+    public SettingsViewModel(StartupService startupService, AppSettingsService appSettingsService, WindowPlacementService windowPlacementService)
     {
         _startupService = startupService ?? throw new ArgumentNullException(nameof(startupService));
         _appSettingsService = appSettingsService ?? throw new ArgumentNullException(nameof(appSettingsService));
+        _windowPlacementService = windowPlacementService ?? throw new ArgumentNullException(nameof(windowPlacementService));
+
+        ResetSettingsCommand = new RelayCommand(_ => ResetSettings());
 
         LoadStartupState();
     }
@@ -155,6 +138,44 @@ public class SettingsViewModel : ViewModelBase
         {
             _isStartupEnabled = false;
             StartupErrorMessage = $"시작 프로그램 상태를 확인하지 못했습니다. {exception.Message}";
+        }
+    }
+
+    /// <summary>
+    /// 앱 표시 설정과 창 위치 및 크기를 기본값으로 되돌립니다.
+    /// </summary>
+    private void ResetSettings()
+    {
+        ApplyAppSetting(() =>
+        {
+            _appSettingsService.ResetToDefault();
+            _windowPlacementService.ResetToDefault();
+        }, "설정을 초기화하지 못했습니다.", nameof(IsTopmost), nameof(ShowInTaskbar));
+    }
+
+    /// <summary>
+    /// 애플리케이션 설정 변경에 필요한 저장 예외 처리와
+    /// ViewModel 속성 갱신을 공통으로 수행합니다.
+    /// </summary>
+    private void ApplyAppSetting(Action action, string errorMessage, params string[] propertyNames)
+    {
+        try
+        {
+            action();
+            AppSettingsErrorMessage = string.Empty;
+        }
+        catch (IOException exception)
+        {
+            AppSettingsErrorMessage = $"{errorMessage} {exception.Message}";
+        }
+        catch (UnauthorizedAccessException exception)
+        {
+            AppSettingsErrorMessage = $"{errorMessage} {exception.Message}";
+        }
+
+        foreach (var propertyName in propertyNames)
+        {
+            OnPropertyChanged(propertyName);
         }
     }
 }

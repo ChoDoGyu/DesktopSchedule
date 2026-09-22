@@ -79,4 +79,13 @@ public sealed class LocalJsonStore<T> where T : class
         var json = JsonSerializer.Serialize(value, SerializerOptions);
         File.WriteAllText(_filePath, json);
     }
+
+    /// <summary>
+    /// 현재 저장된 JSON 파일을 삭제합니다.
+    /// 파일이 존재하지 않는 경우에는 아무 작업도 하지 않습니다.
+    /// </summary>
+    public void Delete()
+    {
+        File.Delete(_filePath);
+    }
 }

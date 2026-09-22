@@ -11,6 +11,7 @@ public class MainWindowViewModel : ViewModelBase
     private readonly ScheduleService _scheduleService;
     private readonly StartupService _startupService;
     private readonly AppSettingsService _appSettingsService;
+    private readonly WindowPlacementService _windowPlacementService;
 
     private string _title = "DesktopSchedule";
     private ViewModelBase _currentViewModel;
@@ -46,18 +47,16 @@ public class MainWindowViewModel : ViewModelBase
     }
 
     public RelayCommand ShowMonthlyCalendarCommand { get; }
-
     public RelayCommand ShowWeeklyScheduleCommand { get; }
-
     public RelayCommand ShowDailyCommand { get; }
-
     public RelayCommand ShowSettingsCommand { get; }
 
-    public MainWindowViewModel(ScheduleService scheduleService, StartupService startupService, AppSettingsService appSettingsService)
+    public MainWindowViewModel(ScheduleService scheduleService, StartupService startupService, AppSettingsService appSettingsService, WindowPlacementService windowPlacementService)
     {
         _scheduleService = scheduleService ?? throw new ArgumentNullException(nameof(scheduleService));
         _startupService = startupService ?? throw new ArgumentNullException(nameof(startupService));
         _appSettingsService = appSettingsService ?? throw new ArgumentNullException(nameof(appSettingsService));
+        _windowPlacementService = windowPlacementService ?? throw new ArgumentNullException(nameof(windowPlacementService));
 
         _appSettingsService.SettingsChanged += AppSettingsService_SettingsChanged;
 
@@ -104,10 +103,10 @@ public class MainWindowViewModel : ViewModelBase
 
     /// <summary>
     /// 설정 화면으로 전환합니다.
-    /// Windows 설정 Service와 애플리케이션 설정 Service를 전달합니다.
+    /// 설정 화면에서 필요한 Windows 및 애플리케이션 설정 서비스를 공유합니다.
     /// </summary>
     private void ShowSettings()
     {
-        CurrentViewModel = new SettingsViewModel(_startupService, _appSettingsService);
+        CurrentViewModel = new SettingsViewModel(_startupService, _appSettingsService, _windowPlacementService);
     }
 }

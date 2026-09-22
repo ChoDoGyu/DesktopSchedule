@@ -45,7 +45,8 @@
         <Border BorderBrush="LightGray"
                 BorderThickness="1"
                 CornerRadius="8"
-                Padding="16">
+                Padding="16"
+                Margin="0,0,0,12">
 
             <StackPanel>
                 <TextBlock Text="창"
@@ -71,7 +72,36 @@
                            Foreground="DimGray"
                            FontSize="12"
                            TextWrapping="Wrap"
-                           Margin="24,0,0,0" />
+                           Margin="24,0,0,8" />
+
+                <TextBlock Text="{Binding AppSettingsErrorMessage}"
+                           Foreground="DarkRed"
+                           TextWrapping="Wrap"
+                           Margin="24,8,0,0" />
+            </StackPanel>
+        </Border>
+
+        <Border BorderBrush="LightGray"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="16">
+
+            <StackPanel>
+                <TextBlock Text="초기화"
+                           FontSize="16"
+                           FontWeight="SemiBold"
+                           Margin="0,0,0,12" />
+
+                <Button Content="앱 표시 설정 기본값으로 초기화"
+                        Command="{Binding ResetSettingsCommand}"
+                        HorizontalAlignment="Left"
+                        Padding="12,6"
+                        Margin="0,0,0,8" />
+
+                <TextBlock Text="항상 위와 작업 표시줄 설정, 창 위치와 크기를 기본값으로 되돌립니다. Windows 시작 프로그램 설정과 일정 데이터는 유지됩니다."
+                           Foreground="DimGray"
+                           FontSize="12"
+                           TextWrapping="Wrap" />
             </StackPanel>
         </Border>
     </StackPanel>

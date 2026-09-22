@@ -71,6 +71,22 @@ public sealed class AppSettingsService
     }
 
     /// <summary>
+    /// DesktopSchedule 자체 설정을 기본값으로 되돌리고 즉시 저장합니다.
+    /// 이미 기본값이라면 다시 저장하지 않습니다.
+    /// </summary>
+    public void ResetToDefault()
+    {
+        var defaultSettings = CreateDefault();
+
+        if (_settings.IsTopmost == defaultSettings.IsTopmost && _settings.ShowInTaskbar == defaultSettings.ShowInTaskbar)
+        {
+            return;
+        }
+
+        Save(defaultSettings);
+    }
+
+    /// <summary>
     /// 새 설정을 JSON 파일에 저장한 뒤 현재 상태를 교체하고 변경을 알립니다.
     /// 저장에 실패한 경우 기존 메모리 상태는 유지합니다.
     /// </summary>

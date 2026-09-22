@@ -14,6 +14,9 @@ public sealed class WindowPlacementService
     private const double MinimumVisibleWidth = 120.0;
     private const double MinimumVisibleHeight = 80.0;
 
+    public const double DefaultWidth = 1120.0;
+    public const double DefaultHeight = 960.0;
+
     private readonly LocalJsonStore<WindowPlacement> _store;
 
     public WindowPlacementService()
@@ -65,12 +68,7 @@ public sealed class WindowPlacementService
 
         var width = Math.Max(placement.Width, window.MinWidth);
         var height = Math.Max(placement.Height, window.MinHeight);
-
-        var savedBounds = new Rect(
-            placement.Left,
-            placement.Top,
-            width,
-            height);
+        var savedBounds = new Rect(placement.Left, placement.Top, width, height);
 
         if (!IsValidBounds(savedBounds))
         {
@@ -92,6 +90,24 @@ public sealed class WindowPlacementService
     }
 
     /// <summary>
+    /// 저장된 창 위치와 크기를 삭제하고 현재 MainWindow를
+    /// 최초 실행 기본 크기와 주 모니터 중앙 위치로 즉시 되돌립니다.
+    /// </summary>
+    public void ResetToDefault()
+    {
+        _store.Delete();
+
+        if (Application.Current.MainWindow is not Window window)
+        {
+            return;
+        }
+
+        window.WindowState = WindowState.Normal;
+        window.WindowStartupLocation = WindowStartupLocation.Manual;
+        MoveToPrimaryScreenCenter(window, DefaultWidth, DefaultHeight);
+    }
+
+    /// <summary>
     /// 저장된 창 영역이 현재 연결된 모니터 중 하나에 충분히 표시되는지 확인합니다.
     /// 아주 작은 일부만 화면에 걸쳐 있는 경우에는 정상 위치로 인정하지 않습니다.
     /// </summary>
@@ -100,18 +116,10 @@ public sealed class WindowPlacementService
         foreach (var screen in Forms.Screen.AllScreens)
         {
             var workingArea = screen.WorkingArea;
-
-            var screenBounds = new Rect(
-                workingArea.Left,
-                workingArea.Top,
-                workingArea.Width,
-                workingArea.Height);
-
+            var screenBounds = new Rect(workingArea.Left, workingArea.Top, workingArea.Width, workingArea.Height);
             var intersection = Rect.Intersect(windowBounds, screenBounds);
 
-            if (!intersection.IsEmpty &&
-                intersection.Width >= MinimumVisibleWidth &&
-                intersection.Height >= MinimumVisibleHeight)
+            if (!intersection.IsEmpty && intersection.Width >= MinimumVisibleWidth && intersection.Height >= MinimumVisibleHeight)
             {
                 return true;
             }
@@ -121,7 +129,7 @@ public sealed class WindowPlacementService
     }
 
     /// <summary>
-    /// 저장된 위치를 사용할 수 없을 때 MainWindow를 주 모니터 작업 영역의 중앙으로 이동합니다.
+    /// 지정된 크기로 MainWindow를 조정한 뒤 주 모니터 작업 영역의 중앙으로 이동합니다.
     /// 창 크기가 작업 영역보다 큰 경우에는 가능한 범위 안으로 크기를 제한합니다.
     /// </summary>
     private static void MoveToPrimaryScreenCenter(Window window, double width, double height)
@@ -130,25 +138,25 @@ public sealed class WindowPlacementService
 
         if (primaryScreen is null)
         {
-            window.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            var workingArea = SystemParameters.WorkArea;
+            var restoredWidth = Math.Min(width, Math.Max(window.MinWidth, workingArea.Width));
+            var restoredHeight = Math.Min(height, Math.Max(window.MinHeight, workingArea.Height));
+
+            window.Width = restoredWidth;
+            window.Height = restoredHeight;
+            window.Left = workingArea.Left + (workingArea.Width - restoredWidth) / 2.0;
+            window.Top = workingArea.Top + (workingArea.Height - restoredHeight) / 2.0;
             return;
         }
 
-        var workingArea = primaryScreen.WorkingArea;
+        var primaryWorkingArea = primaryScreen.WorkingArea;
+        var primaryRestoredWidth = Math.Min(width, Math.Max(window.MinWidth, primaryWorkingArea.Width));
+        var primaryRestoredHeight = Math.Min(height, Math.Max(window.MinHeight, primaryWorkingArea.Height));
 
-        var restoredWidth = Math.Min(
-            width,
-            Math.Max(window.MinWidth, workingArea.Width));
-
-        var restoredHeight = Math.Min(
-            height,
-            Math.Max(window.MinHeight, workingArea.Height));
-
-        window.Width = restoredWidth;
-        window.Height = restoredHeight;
-
-        window.Left = workingArea.Left + (workingArea.Width - restoredWidth) / 2.0;
-        window.Top = workingArea.Top + (workingArea.Height - restoredHeight) / 2.0;
+        window.Width = primaryRestoredWidth;
+        window.Height = primaryRestoredHeight;
+        window.Left = primaryWorkingArea.Left + (primaryWorkingArea.Width - primaryRestoredWidth) / 2.0;
+        window.Top = primaryWorkingArea.Top + (primaryWorkingArea.Height - primaryRestoredHeight) / 2.0;
     }
 
     /// <summary>
@@ -159,11 +167,7 @@ public sealed class WindowPlacementService
     {
         if (window.WindowState == WindowState.Normal)
         {
-            return new Rect(
-                window.Left,
-                window.Top,
-                window.Width,
-                window.Height);
+            return new Rect(window.Left, window.Top, window.Width, window.Height);
         }
 
         return window.RestoreBounds;
