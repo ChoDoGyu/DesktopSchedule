@@ -27,11 +27,6 @@ public class MonthlyCalendarViewModel : ScheduleEditorViewModelBase
     public ObservableCollection<MonthlyWeekViewModel> Weeks { get; } = new();
 
     /// <summary>
-    /// 현재 화면에서 사용하는 전체 일정 목록입니다.
-    /// </summary>
-    public ObservableCollection<ScheduleItem> Schedules { get; } = new();
-
-    /// <summary>
     /// 현재 월간 달력에서 표시하고 있는 월입니다.
     /// 값은 항상 해당 월의 1일입니다.
     /// </summary>
@@ -124,7 +119,6 @@ public class MonthlyCalendarViewModel : ScheduleEditorViewModelBase
         Weeks.Clear();
 
         var firstDayOfMonth = new DateTime(DisplayMonth.Year, DisplayMonth.Month, 1);
-
         var calendarStartDate = firstDayOfMonth.AddDays(-(int)firstDayOfMonth.DayOfWeek);
 
         for (var weekOffset = 0; weekOffset < 6; weekOffset++)
@@ -142,15 +136,9 @@ public class MonthlyCalendarViewModel : ScheduleEditorViewModelBase
     /// </summary>
     public void LoadSchedules()
     {
-        Schedules.Clear();
         ClearMonthlyScheduleLayout();
 
         var schedules = ScheduleService.GetAll(ShowCompletedSchedules);
-
-        foreach (var schedule in schedules)
-        {
-            Schedules.Add(schedule);
-        }
 
         LoadScheduleLayouts(schedules);
     }
@@ -181,7 +169,6 @@ public class MonthlyCalendarViewModel : ScheduleEditorViewModelBase
 
             SelectedDate = targetDay.Date;
             UpdateSelectedDateState();
-
             ErrorMessage = string.Empty;
 
             LoadSchedules();
@@ -236,21 +223,18 @@ public class MonthlyCalendarViewModel : ScheduleEditorViewModelBase
     /// </summary>
     private static void LoadScheduleLayoutForWeek(MonthlyWeekViewModel week, IReadOnlyList<ScheduleItem> schedules)
     {
-        var layout = ScheduleCalendarCalculator.CreateWeekLayout(
-            schedules,
-            week.WeekStartDate);
+        var layout = ScheduleCalendarCalculator.CreateWeekLayout(schedules, week.WeekStartDate);
 
         foreach (var placement in layout.Placements)
         {
-            week.SpanningSchedules.Add(
-                new MonthlySpanningScheduleViewModel(
-                    placement.Schedule,
-                    placement.VisibleStartDate,
-                    placement.VisibleEndDate,
-                    placement.StartDayIndex,
-                    placement.DaySpan,
-                    placement.RowIndex,
-                    placement.ContinuesToNextWeek));
+            week.SpanningSchedules.Add(new MonthlySpanningScheduleViewModel(
+                placement.Schedule,
+                placement.VisibleStartDate,
+                placement.VisibleEndDate,
+                placement.StartDayIndex,
+                placement.DaySpan,
+                placement.RowIndex,
+                placement.ContinuesToNextWeek));
         }
 
         week.UpdateSpanningRowCount(layout.RowCount);
@@ -275,11 +259,7 @@ public class MonthlyCalendarViewModel : ScheduleEditorViewModelBase
     /// </summary>
     private void MoveToCurrentMonth()
     {
-        DisplayMonth = new DateTime(
-            DateTime.Today.Year,
-            DateTime.Today.Month,
-            1);
-
+        DisplayMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
         SelectedDate = DateTime.Today;
 
         CloseEditor();

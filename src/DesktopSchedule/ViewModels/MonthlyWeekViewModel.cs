@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using DesktopSchedule.Utilities;
 
 namespace DesktopSchedule.ViewModels;
 
@@ -9,13 +10,6 @@ namespace DesktopSchedule.ViewModels;
 /// </summary>
 public class MonthlyWeekViewModel : ViewModelBase
 {
-    // 한 행의 연결 일정 막대가 사용할 기본 높이입니다.
-    private const double SpanningScheduleRowHeight = 28.0;
-
-    // 연결 일정 막대 영역 아래에 둘 여백입니다.
-    private const double SpanningScheduleAreaPadding = 4.0;
-
-    // 현재 주의 연결 일정들이 사용하는 실제 행 개수입니다.
     private int _spanningRowCount;
 
     /// <summary>
@@ -59,11 +53,8 @@ public class MonthlyWeekViewModel : ViewModelBase
 
     /// <summary>
     /// 연결 일정 막대들이 차지할 전체 세로 영역의 높이입니다.
-    /// 이후 월간 XAML에서 일정 개수에 따라 필요한 공간을 확보할 때 사용합니다.
     /// </summary>
-    public double SpanningAreaHeight => SpanningRowCount == 0
-        ? 0
-        : SpanningRowCount * SpanningScheduleRowHeight + SpanningScheduleAreaPadding;
+    public double SpanningAreaHeight => CalendarScheduleMetrics.GetAreaHeight(SpanningRowCount);
 
     /// <summary>
     /// 월간 달력의 한 주를 생성합니다.
@@ -79,36 +70,6 @@ public class MonthlyWeekViewModel : ViewModelBase
             var date = WeekStartDate.AddDays(dayOffset);
             Days.Add(new MonthlyDayViewModel(date, displayMonth));
         }
-    }
-
-    /// <summary>
-    /// 지정한 날짜가 이 주의 일요일부터 토요일 범위 안에 포함되는지 확인합니다.
-    /// </summary>
-    public bool ContainsDate(DateTime date)
-    {
-        var targetDate = date.Date;
-
-        return targetDate >= WeekStartDate &&
-               targetDate <= WeekEndDate;
-    }
-
-    /// <summary>
-    /// 지정한 날짜에 해당하는 날짜 셀을 반환합니다.
-    /// 이 주에 포함되지 않은 날짜라면 null을 반환합니다.
-    /// </summary>
-    public MonthlyDayViewModel? GetDay(DateTime date)
-    {
-        var targetDate = date.Date;
-
-        foreach (var day in Days)
-        {
-            if (day.Date == targetDate)
-            {
-                return day;
-            }
-        }
-
-        return null;
     }
 
     /// <summary>

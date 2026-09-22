@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
+using DesktopSchedule.Utilities;
 using DesktopSchedule.ViewModels;
 
 namespace DesktopSchedule.Controls;
@@ -16,45 +17,25 @@ namespace DesktopSchedule.Controls;
 /// </remarks>
 public class CalendarSchedulePanel : Panel
 {
-    // 일정 한 행이 차지하는 전체 세로 높이입니다.
-    private const double RowHeight = 28.0;
-
-    // 실제 일정 카드의 높이입니다.
-    // 행 사이에 약간의 간격이 남도록 RowHeight보다 작게 사용합니다.
-    private const double ScheduleHeight = 24.0;
-
-    // 날짜 셀 경계와 일정 카드 사이의 좌우 여백입니다.
-    private const double HorizontalMargin = 3.0;
-
     /// <summary>
     /// 현재 화면 너비를 기준으로 각 일정 카드가 필요로 하는 크기를 측정합니다.
     /// </summary>
     protected override Size MeasureOverride(Size availableSize)
     {
-        var availableWidth = double.IsInfinity(availableSize.Width)
-            ? 0
-            : availableSize.Width;
-
-        var dayColumnWidth = availableWidth > 0
-            ? availableWidth / 7.0
-            : 0;
-
+        var availableWidth = double.IsInfinity(availableSize.Width) ? 0 : availableSize.Width;
+        var dayColumnWidth = availableWidth > 0 ? availableWidth / 7.0 : 0;
         var desiredHeight = 0.0;
 
         foreach (UIElement child in InternalChildren)
         {
-            if (child is FrameworkElement element &&
-                element.DataContext is SpanningScheduleViewModelBase schedule)
+            if (child is FrameworkElement element && element.DataContext is SpanningScheduleViewModelBase schedule)
             {
-                var childWidth = Math.Max(
-                    0,
-                    schedule.DaySpan * dayColumnWidth - HorizontalMargin * 2);
+                var childWidth = Math.Max(0, schedule.DaySpan * dayColumnWidth - CalendarScheduleMetrics.HorizontalMargin * 2);
 
-                child.Measure(new Size(childWidth, ScheduleHeight));
+                child.Measure(new Size(childWidth, CalendarScheduleMetrics.ScheduleHeight));
 
-                var scheduleBottom = schedule.RowIndex * RowHeight + RowHeight;
+                var scheduleBottom = schedule.RowIndex * CalendarScheduleMetrics.RowHeight + CalendarScheduleMetrics.RowHeight;
                 desiredHeight = Math.Max(desiredHeight, scheduleBottom);
-
                 continue;
             }
 
@@ -79,26 +60,17 @@ public class CalendarSchedulePanel : Panel
 
         foreach (UIElement child in InternalChildren)
         {
-            if (child is not FrameworkElement element ||
-                element.DataContext is not SpanningScheduleViewModelBase schedule)
+            if (child is not FrameworkElement element || element.DataContext is not SpanningScheduleViewModelBase schedule)
             {
                 child.Arrange(new Rect(new Point(), child.DesiredSize));
                 continue;
             }
 
-            var left = schedule.StartDayIndex * dayColumnWidth + HorizontalMargin;
-            var top = schedule.RowIndex * RowHeight + 2.0;
+            var left = schedule.StartDayIndex * dayColumnWidth + CalendarScheduleMetrics.HorizontalMargin;
+            var top = schedule.RowIndex * CalendarScheduleMetrics.RowHeight + CalendarScheduleMetrics.VerticalOffset;
+            var width = Math.Max(0, schedule.DaySpan * dayColumnWidth - CalendarScheduleMetrics.HorizontalMargin * 2);
 
-            var width = Math.Max(
-                0,
-                schedule.DaySpan * dayColumnWidth - HorizontalMargin * 2);
-
-            child.Arrange(
-                new Rect(
-                    left,
-                    top,
-                    width,
-                    ScheduleHeight));
+            child.Arrange(new Rect(left, top, width, CalendarScheduleMetrics.ScheduleHeight));
         }
 
         return finalSize;

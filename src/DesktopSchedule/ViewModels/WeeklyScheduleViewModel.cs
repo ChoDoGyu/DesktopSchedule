@@ -13,20 +13,8 @@ namespace DesktopSchedule.ViewModels;
 /// </summary>
 public class WeeklyScheduleViewModel : ScheduleEditorViewModelBase
 {
-    // 일정 한 행이 사용하는 화면 높이입니다.
-    // 공통 일정 Panel의 RowHeight와 동일하게 사용합니다.
-    private const double ScheduleRowHeight = 28.0;
-
-    // 일정 영역 아래쪽에 추가하는 여백입니다.
-    private const double ScheduleAreaPadding = 4.0;
-
-    // 현재 화면에 표시하고 있는 주의 시작 날짜입니다.
     private DateTime _weekStartDate;
-
-    // 사용자가 현재 선택한 날짜입니다.
     private DateTime _selectedDate;
-
-    // 일정 막대가 사용하는 전체 화면 높이입니다.
     private double _spanningAreaHeight;
 
     /// <summary>
@@ -102,11 +90,6 @@ public class WeeklyScheduleViewModel : ScheduleEditorViewModelBase
     public RelayCommand NextWeekCommand { get; }
 
     /// <summary>
-    /// 지정한 날짜만 선택합니다.
-    /// </summary>
-    public RelayCommand SelectDateCommand { get; }
-
-    /// <summary>
     /// 날짜를 선택한 뒤 해당 날짜를 기준으로 새 일정 편집기를 엽니다.
     /// </summary>
     public RelayCommand OpenNewScheduleForDateCommand { get; }
@@ -116,8 +99,6 @@ public class WeeklyScheduleViewModel : ScheduleEditorViewModelBase
         PreviousWeekCommand = new RelayCommand(_ => MoveWeek(-1));
         CurrentWeekCommand = new RelayCommand(_ => MoveToCurrentWeek());
         NextWeekCommand = new RelayCommand(_ => MoveWeek(1));
-
-        SelectDateCommand = new RelayCommand(parameter => SelectDate(parameter as WeeklyDayViewModel));
         OpenNewScheduleForDateCommand = new RelayCommand(parameter => OpenNewScheduleForDate(parameter as WeeklyDayViewModel));
 
         WeekStartDate = GetWeekStart(DateTime.Today);
@@ -167,18 +148,15 @@ public class WeeklyScheduleViewModel : ScheduleEditorViewModelBase
 
         foreach (var placement in layout.Placements)
         {
-            SpanningSchedules.Add(
-                new WeeklySpanningScheduleViewModel(
-                    placement.Schedule,
-                    placement.VisibleStartDate,
-                    placement.StartDayIndex,
-                    placement.DaySpan,
-                    placement.RowIndex));
+            SpanningSchedules.Add(new WeeklySpanningScheduleViewModel(
+                placement.Schedule,
+                placement.VisibleStartDate,
+                placement.StartDayIndex,
+                placement.DaySpan,
+                placement.RowIndex));
         }
 
-        SpanningAreaHeight = layout.RowCount == 0
-            ? 0
-            : layout.RowCount * ScheduleRowHeight + ScheduleAreaPadding;
+        SpanningAreaHeight = CalendarScheduleMetrics.GetAreaHeight(layout.RowCount);
     }
 
     /// <summary>

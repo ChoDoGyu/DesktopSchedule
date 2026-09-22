@@ -201,22 +201,20 @@ public class DailyViewModel : ScheduleEditorViewModelBase
     }
 
     /// <summary>
-    /// 선택 날짜의 시간 일정을 추려 24시간 타임라인의 겹침 열과 실제 위치를 계산합니다.
+    /// 선택 날짜의 시간 일정을 추리고 공통 계산기를 이용해
+    /// 24시간 타임라인의 겹침 열 배치를 구성합니다.
     /// </summary>
     private void LoadTimedSchedules(IReadOnlyList<ScheduleItem> schedules)
     {
         var timedSchedules = schedules
             .Where(schedule => !schedule.IsAllDay && (ShowCompletedSchedules || !schedule.IsCompleted))
-            .OrderBy(schedule => GetVisibleStartAt(schedule))
-            .ThenBy(schedule => GetVisibleEndAt(schedule))
-            .ThenBy(schedule => schedule.Title)
             .ToList();
 
-        var layouts = CreateScheduleLayouts(timedSchedules);
+        var placements = DailyScheduleLayoutCalculator.CreateLayout(timedSchedules, SelectedDate);
 
-        foreach (var layout in layouts)
+        foreach (var placement in placements)
         {
-            TimedSchedules.Add(new DailyScheduleViewModel(layout.Schedule, SelectedDate, layout.ColumnIndex, layout.ColumnCount));
+            TimedSchedules.Add(new DailyScheduleViewModel(placement.Schedule, SelectedDate, placement.ColumnIndex, placement.ColumnCount));
         }
     }
 
@@ -238,129 +236,6 @@ public class DailyViewModel : ScheduleEditorViewModelBase
                 IncompleteSchedules.Add(scheduleViewModel);
             }
         }
-    }
-
-    /// <summary>
-    /// 시간이 서로 겹치는 일정들을 그룹으로 묶고 각 그룹 안에서 사용할 가로 열 번호를 계산합니다.
-    /// </summary>
-    private IReadOnlyList<DailyScheduleLayout> CreateScheduleLayouts(IReadOnlyList<ScheduleItem> schedules)
-    {
-        var result = new List<DailyScheduleLayout>();
-        var currentGroup = new List<DailyScheduleCandidate>();
-        DateTime? currentGroupEndAt = null;
-
-        foreach (var schedule in schedules)
-        {
-            var candidate = CreateCandidate(schedule);
-
-            if (currentGroup.Count > 0 && currentGroupEndAt.HasValue && candidate.VisibleStartAt >= currentGroupEndAt.Value)
-            {
-                AddGroupLayouts(currentGroup, result);
-                currentGroup.Clear();
-                currentGroupEndAt = null;
-            }
-
-            currentGroup.Add(candidate);
-
-            if (!currentGroupEndAt.HasValue || candidate.LayoutEndAt > currentGroupEndAt.Value)
-            {
-                currentGroupEndAt = candidate.LayoutEndAt;
-            }
-        }
-
-        if (currentGroup.Count > 0)
-        {
-            AddGroupLayouts(currentGroup, result);
-        }
-
-        return result;
-    }
-
-    /// <summary>
-    /// 하나의 시간 겹침 그룹에서 사용할 가로 열을 계산합니다.
-    /// </summary>
-    private static void AddGroupLayouts(IReadOnlyList<DailyScheduleCandidate> group, ICollection<DailyScheduleLayout> result)
-    {
-        var columnEndTimes = new List<DateTime>();
-        var assignments = new List<DailyScheduleColumnAssignment>();
-
-        foreach (var candidate in group)
-        {
-            var columnIndex = FindAvailableColumn(columnEndTimes, candidate.VisibleStartAt);
-
-            if (columnIndex == columnEndTimes.Count)
-            {
-                columnEndTimes.Add(candidate.LayoutEndAt);
-            }
-            else
-            {
-                columnEndTimes[columnIndex] = candidate.LayoutEndAt;
-            }
-
-            assignments.Add(new DailyScheduleColumnAssignment(candidate.Schedule, columnIndex));
-        }
-
-        var columnCount = columnEndTimes.Count;
-
-        foreach (var assignment in assignments)
-        {
-            result.Add(new DailyScheduleLayout(assignment.Schedule, assignment.ColumnIndex, columnCount));
-        }
-    }
-
-    /// <summary>
-    /// 현재 일정이 사용할 수 있는 가장 왼쪽의 빈 열을 반환합니다.
-    /// </summary>
-    private static int FindAvailableColumn(IReadOnlyList<DateTime> columnEndTimes, DateTime startAt)
-    {
-        for (var columnIndex = 0; columnIndex < columnEndTimes.Count; columnIndex++)
-        {
-            if (startAt >= columnEndTimes[columnIndex])
-            {
-                return columnIndex;
-            }
-        }
-
-        return columnEndTimes.Count;
-    }
-
-    /// <summary>
-    /// 일정의 실제 표시 시간과 최소 카드 높이를 고려한 겹침 계산 후보를 생성합니다.
-    /// </summary>
-    private DailyScheduleCandidate CreateCandidate(ScheduleItem schedule)
-    {
-        var dayEnd = SelectedDate.Date.AddDays(1);
-        var visibleStartAt = GetVisibleStartAt(schedule);
-        var visibleEndAt = GetVisibleEndAt(schedule);
-        var actualDurationMinutes = Math.Max(0, (visibleEndAt - visibleStartAt).TotalMinutes);
-        var minimumDisplayMinutes = DailyTimelineMetrics.MinimumScheduleHeight / DailyTimelineMetrics.HourHeight * 60.0;
-        var layoutDurationMinutes = Math.Max(actualDurationMinutes, minimumDisplayMinutes);
-        var layoutEndAt = visibleStartAt.AddMinutes(layoutDurationMinutes);
-
-        if (layoutEndAt > dayEnd)
-        {
-            layoutEndAt = dayEnd;
-        }
-
-        return new DailyScheduleCandidate(schedule, visibleStartAt, visibleEndAt, layoutEndAt);
-    }
-
-    /// <summary>
-    /// 선택 날짜 안에서 일정이 실제로 보이기 시작하는 시각을 반환합니다.
-    /// </summary>
-    private DateTime GetVisibleStartAt(ScheduleItem schedule)
-    {
-        var dayStart = SelectedDate.Date;
-        return schedule.StartAt < dayStart ? dayStart : schedule.StartAt;
-    }
-
-    /// <summary>
-    /// 선택 날짜 안에서 일정이 실제로 보이는 마지막 시각을 반환합니다.
-    /// </summary>
-    private DateTime GetVisibleEndAt(ScheduleItem schedule)
-    {
-        var dayEnd = SelectedDate.Date.AddDays(1);
-        return schedule.EndAt > dayEnd ? dayEnd : schedule.EndAt;
     }
 
     /// <summary>
@@ -400,10 +275,4 @@ public class DailyViewModel : ScheduleEditorViewModelBase
             _ => string.Empty
         };
     }
-
-    private readonly record struct DailyScheduleCandidate(ScheduleItem Schedule, DateTime VisibleStartAt, DateTime VisibleEndAt, DateTime LayoutEndAt);
-
-    private readonly record struct DailyScheduleColumnAssignment(ScheduleItem Schedule, int ColumnIndex);
-
-    private readonly record struct DailyScheduleLayout(ScheduleItem Schedule, int ColumnIndex, int ColumnCount);
 }
