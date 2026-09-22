@@ -13,8 +13,8 @@
         MinHeight="800"
         ResizeMode="CanResize"
         WindowStartupLocation="CenterScreen"
-        Topmost="{Binding IsTopmost}"
-        ShowInTaskbar="{Binding ShowInTaskbar}">
+        Topmost="{Binding IsTopmost, Mode=OneWay}"
+        ShowInTaskbar="{Binding ShowInTaskbar, Mode=OneWay}">
 
     <Window.Resources>
         <DataTemplate DataType="{x:Type vm:MonthlyCalendarViewModel}">

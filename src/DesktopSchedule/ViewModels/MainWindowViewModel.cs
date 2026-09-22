@@ -10,10 +10,9 @@ public class MainWindowViewModel : ViewModelBase
 {
     private readonly ScheduleService _scheduleService;
     private readonly StartupService _startupService;
+    private readonly AppSettingsService _appSettingsService;
 
     private string _title = "DesktopSchedule";
-    private bool _isTopmost;
-    private bool _showInTaskbar = true;
     private ViewModelBase _currentViewModel;
 
     /// <summary>
@@ -27,21 +26,15 @@ public class MainWindowViewModel : ViewModelBase
 
     /// <summary>
     /// MainWindow를 다른 창보다 항상 위에 표시할지 여부입니다.
+    /// 현재 애플리케이션 설정 상태를 그대로 제공합니다.
     /// </summary>
-    public bool IsTopmost
-    {
-        get => _isTopmost;
-        set => SetProperty(ref _isTopmost, value);
-    }
+    public bool IsTopmost => _appSettingsService.IsTopmost;
 
     /// <summary>
     /// MainWindow를 Windows 작업 표시줄에 표시할지 여부입니다.
+    /// 현재 애플리케이션 설정 상태를 그대로 제공합니다.
     /// </summary>
-    public bool ShowInTaskbar
-    {
-        get => _showInTaskbar;
-        set => SetProperty(ref _showInTaskbar, value);
-    }
+    public bool ShowInTaskbar => _appSettingsService.ShowInTaskbar;
 
     /// <summary>
     /// 현재 MainWindow에 표시할 화면의 ViewModel입니다.
@@ -60,10 +53,13 @@ public class MainWindowViewModel : ViewModelBase
 
     public RelayCommand ShowSettingsCommand { get; }
 
-    public MainWindowViewModel(ScheduleService scheduleService, StartupService startupService)
+    public MainWindowViewModel(ScheduleService scheduleService, StartupService startupService, AppSettingsService appSettingsService)
     {
         _scheduleService = scheduleService ?? throw new ArgumentNullException(nameof(scheduleService));
         _startupService = startupService ?? throw new ArgumentNullException(nameof(startupService));
+        _appSettingsService = appSettingsService ?? throw new ArgumentNullException(nameof(appSettingsService));
+
+        _appSettingsService.SettingsChanged += AppSettingsService_SettingsChanged;
 
         _currentViewModel = new MonthlyCalendarViewModel(_scheduleService);
 
@@ -71,6 +67,15 @@ public class MainWindowViewModel : ViewModelBase
         ShowWeeklyScheduleCommand = new RelayCommand(_ => ShowWeeklySchedule());
         ShowDailyCommand = new RelayCommand(_ => ShowDaily());
         ShowSettingsCommand = new RelayCommand(_ => ShowSettings());
+    }
+
+    /// <summary>
+    /// 애플리케이션 설정이 변경되면 MainWindow에 바인딩된 표시 상태를 갱신합니다.
+    /// </summary>
+    private void AppSettingsService_SettingsChanged()
+    {
+        OnPropertyChanged(nameof(IsTopmost));
+        OnPropertyChanged(nameof(ShowInTaskbar));
     }
 
     /// <summary>
@@ -99,10 +104,10 @@ public class MainWindowViewModel : ViewModelBase
 
     /// <summary>
     /// 설정 화면으로 전환합니다.
-    /// 현재 MainWindow의 표시 상태를 즉시 변경할 수 있도록 자기 자신을 전달합니다.
+    /// Windows 설정 Service와 애플리케이션 설정 Service를 전달합니다.
     /// </summary>
     private void ShowSettings()
     {
-        CurrentViewModel = new SettingsViewModel(_startupService, this);
+        CurrentViewModel = new SettingsViewModel(_startupService, _appSettingsService);
     }
 }

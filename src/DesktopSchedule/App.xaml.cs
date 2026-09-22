@@ -25,7 +25,8 @@ public partial class App : Application
 
     /// <summary>
     /// 애플리케이션이 시작될 때 데이터베이스, 일정 서비스,
-    /// Windows 연동 서비스, 알림 스케줄러, 메인 창과 시스템 트레이를 준비합니다.
+    /// Windows 연동 서비스, 애플리케이션 설정, 알림 스케줄러,
+    /// 메인 창과 시스템 트레이를 준비합니다.
     /// </summary>
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -37,6 +38,7 @@ public partial class App : Application
         var scheduleRepository = new SqliteScheduleRepository(databaseService);
         var scheduleService = new ScheduleService(scheduleRepository);
         var startupService = new StartupService();
+        var appSettingsService = new AppSettingsService();
 
         _windowPlacementService = new WindowPlacementService();
 
@@ -44,7 +46,7 @@ public partial class App : Application
         _reminderScheduler.ReminderDue += ReminderScheduler_ReminderDue;
         _reminderScheduler.Start();
 
-        var mainWindowViewModel = new MainWindowViewModel(scheduleService, startupService);
+        var mainWindowViewModel = new MainWindowViewModel(scheduleService, startupService, appSettingsService);
 
         _mainWindow = new MainWindow(mainWindowViewModel);
 
@@ -88,11 +90,9 @@ public partial class App : Application
             }
             catch (IOException)
             {
-                // 창 위치 저장 실패가 애플리케이션 종료 자체를 막지 않도록 합니다.
             }
             catch (UnauthorizedAccessException)
             {
-                // 저장 경로에 접근할 수 없어도 애플리케이션은 정상 종료합니다.
             }
         }
 

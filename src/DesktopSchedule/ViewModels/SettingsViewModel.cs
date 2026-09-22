@@ -1,4 +1,5 @@
-﻿using DesktopSchedule.Services;
+﻿using System.IO;
+using DesktopSchedule.Services;
 
 namespace DesktopSchedule.ViewModels;
 
@@ -8,10 +9,11 @@ namespace DesktopSchedule.ViewModels;
 public class SettingsViewModel : ViewModelBase
 {
     private readonly StartupService _startupService;
-    private readonly MainWindowViewModel _mainWindowViewModel;
+    private readonly AppSettingsService _appSettingsService;
 
     private bool _isStartupEnabled;
     private string _startupErrorMessage = string.Empty;
+    private string _appSettingsErrorMessage = string.Empty;
 
     /// <summary>
     /// Windows 로그인 시 DesktopSchedule을 자동으로 실행할지 여부입니다.
@@ -51,38 +53,64 @@ public class SettingsViewModel : ViewModelBase
 
     /// <summary>
     /// MainWindow를 다른 프로그램보다 항상 위에 표시할지 여부입니다.
-    /// 변경하면 현재 실행 중인 MainWindow에 즉시 반영됩니다.
+    /// 변경하면 즉시 저장되고 현재 MainWindow에도 반영됩니다.
     /// </summary>
     public bool IsTopmost
     {
-        get => _mainWindowViewModel.IsTopmost;
+        get => _appSettingsService.IsTopmost;
         set
         {
-            if (_mainWindowViewModel.IsTopmost == value)
+            if (_appSettingsService.IsTopmost == value)
             {
                 return;
             }
 
-            _mainWindowViewModel.IsTopmost = value;
+            try
+            {
+                _appSettingsService.SetIsTopmost(value);
+                AppSettingsErrorMessage = string.Empty;
+            }
+            catch (IOException exception)
+            {
+                AppSettingsErrorMessage = $"설정을 저장하지 못했습니다. {exception.Message}";
+            }
+            catch (UnauthorizedAccessException exception)
+            {
+                AppSettingsErrorMessage = $"설정을 저장하지 못했습니다. {exception.Message}";
+            }
+
             OnPropertyChanged();
         }
     }
 
     /// <summary>
     /// MainWindow를 Windows 작업 표시줄에 표시할지 여부입니다.
-    /// 시스템 트레이 아이콘 표시에는 영향을 주지 않습니다.
+    /// 변경하면 즉시 저장되고 현재 MainWindow에도 반영됩니다.
     /// </summary>
     public bool ShowInTaskbar
     {
-        get => _mainWindowViewModel.ShowInTaskbar;
+        get => _appSettingsService.ShowInTaskbar;
         set
         {
-            if (_mainWindowViewModel.ShowInTaskbar == value)
+            if (_appSettingsService.ShowInTaskbar == value)
             {
                 return;
             }
 
-            _mainWindowViewModel.ShowInTaskbar = value;
+            try
+            {
+                _appSettingsService.SetShowInTaskbar(value);
+                AppSettingsErrorMessage = string.Empty;
+            }
+            catch (IOException exception)
+            {
+                AppSettingsErrorMessage = $"설정을 저장하지 못했습니다. {exception.Message}";
+            }
+            catch (UnauthorizedAccessException exception)
+            {
+                AppSettingsErrorMessage = $"설정을 저장하지 못했습니다. {exception.Message}";
+            }
+
             OnPropertyChanged();
         }
     }
@@ -96,10 +124,19 @@ public class SettingsViewModel : ViewModelBase
         private set => SetProperty(ref _startupErrorMessage, value);
     }
 
-    public SettingsViewModel(StartupService startupService, MainWindowViewModel mainWindowViewModel)
+    /// <summary>
+    /// 애플리케이션 설정 파일 저장에 실패했을 때 표시할 오류 메시지입니다.
+    /// </summary>
+    public string AppSettingsErrorMessage
+    {
+        get => _appSettingsErrorMessage;
+        private set => SetProperty(ref _appSettingsErrorMessage, value);
+    }
+
+    public SettingsViewModel(StartupService startupService, AppSettingsService appSettingsService)
     {
         _startupService = startupService ?? throw new ArgumentNullException(nameof(startupService));
-        _mainWindowViewModel = mainWindowViewModel ?? throw new ArgumentNullException(nameof(mainWindowViewModel));
+        _appSettingsService = appSettingsService ?? throw new ArgumentNullException(nameof(appSettingsService));
 
         LoadStartupState();
     }
