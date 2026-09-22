@@ -42,15 +42,14 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="8" />
-                    <ColumnDefinition Width="90" />
+                    <ColumnDefinition Width="100" />
                 </Grid.ColumnDefinitions>
 
                 <controls:ScheduleDatePicker Grid.Column="0"
                                              SelectedDate="{Binding NewStartDate}" />
 
-                <TextBox Grid.Column="2"
-                         Text="{Binding NewStartTime, UpdateSourceTrigger=PropertyChanged}"
-                         Padding="6" />
+                <controls:ScheduleTimePicker Grid.Column="2"
+                                             Text="{Binding NewStartTime, UpdateSourceTrigger=PropertyChanged}" />
             </Grid>
 
             <TextBlock Text="종료"
@@ -60,15 +59,14 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="8" />
-                    <ColumnDefinition Width="90" />
+                    <ColumnDefinition Width="100" />
                 </Grid.ColumnDefinitions>
 
                 <controls:ScheduleDatePicker Grid.Column="0"
                                              SelectedDate="{Binding NewEndDate}" />
 
-                <TextBox Grid.Column="2"
-                         Text="{Binding NewEndTime, UpdateSourceTrigger=PropertyChanged}"
-                         Padding="6" />
+                <controls:ScheduleTimePicker Grid.Column="2"
+                                             Text="{Binding NewEndTime, UpdateSourceTrigger=PropertyChanged}" />
             </Grid>
 
             <CheckBox Content="하루 종일"

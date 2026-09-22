@@ -1,0 +1,55 @@
+﻿<Window x:Class="DesktopSchedule.Views.ReminderPopupWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Width="360"
+        Height="150"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        WindowStartupLocation="Manual"
+        ShowInTaskbar="False"
+        ShowActivated="False"
+        Topmost="True"
+        AllowsTransparency="True"
+        Background="Transparent">
+
+    <Border Background="White"
+            BorderBrush="LightGray"
+            BorderThickness="1"
+            CornerRadius="10"
+            Padding="18">
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0"
+                       Text="DesktopSchedule"
+                       FontSize="14"
+                       FontWeight="SemiBold"
+                       Foreground="DimGray"
+                       Margin="0,0,0,8" />
+
+            <TextBlock Grid.Row="1"
+                       Text="곧 일정이 시작됩니다."
+                       FontSize="13"
+                       Margin="0,0,0,6" />
+
+            <TextBlock x:Name="ScheduleTitleTextBlock"
+                       Grid.Row="2"
+                       FontSize="17"
+                       FontWeight="SemiBold"
+                       TextTrimming="CharacterEllipsis"
+                       Margin="0,0,0,6" />
+
+            <TextBlock x:Name="ScheduleTimeTextBlock"
+                       Grid.Row="3"
+                       FontSize="13"
+                       Foreground="DimGray"
+                       VerticalAlignment="Bottom" />
+        </Grid>
+    </Border>
+</Window>
