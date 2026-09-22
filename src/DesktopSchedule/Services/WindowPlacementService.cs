@@ -90,17 +90,14 @@ public sealed class WindowPlacementService
     }
 
     /// <summary>
-    /// 저장된 창 위치와 크기를 삭제하고 현재 MainWindow를
+    /// 저장된 창 위치와 크기를 삭제하고 전달받은 Window를
     /// 최초 실행 기본 크기와 주 모니터 중앙 위치로 즉시 되돌립니다.
     /// </summary>
-    public void ResetToDefault()
+    public void ResetToDefault(Window window)
     {
-        _store.Delete();
+        ArgumentNullException.ThrowIfNull(window);
 
-        if (Application.Current.MainWindow is not Window window)
-        {
-            return;
-        }
+        _store.Delete();
 
         window.WindowState = WindowState.Normal;
         window.WindowStartupLocation = WindowStartupLocation.Manual;

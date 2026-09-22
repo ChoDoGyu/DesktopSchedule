@@ -46,7 +46,8 @@ public partial class App : Application
         _reminderScheduler.ReminderDue += ReminderScheduler_ReminderDue;
         _reminderScheduler.Start();
 
-        var mainWindowViewModel = new MainWindowViewModel(scheduleService, startupService, appSettingsService, _windowPlacementService);
+        var mainWindowViewModel = new MainWindowViewModel(scheduleService, startupService, appSettingsService);
+        mainWindowViewModel.WindowResetRequested += MainWindowViewModel_WindowResetRequested;
 
         _mainWindow = new MainWindow(mainWindowViewModel);
 
@@ -55,6 +56,20 @@ public partial class App : Application
         _trayIconService = new TrayIconService(_mainWindow, Shutdown);
 
         _mainWindow.Show();
+    }
+
+    /// <summary>
+    /// 설정 화면에서 창 초기화를 요청하면 현재 MainWindow의
+    /// 저장 위치와 크기를 삭제하고 기본 상태로 즉시 복구합니다.
+    /// </summary>
+    private void MainWindowViewModel_WindowResetRequested()
+    {
+        if (_mainWindow is null || _windowPlacementService is null)
+        {
+            return;
+        }
+
+        _windowPlacementService.ResetToDefault(_mainWindow);
     }
 
     /// <summary>

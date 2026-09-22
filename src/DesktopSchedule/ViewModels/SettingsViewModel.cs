@@ -11,11 +11,16 @@ public class SettingsViewModel : ViewModelBase
 {
     private readonly StartupService _startupService;
     private readonly AppSettingsService _appSettingsService;
-    private readonly WindowPlacementService _windowPlacementService;
 
     private bool _isStartupEnabled;
     private string _startupErrorMessage = string.Empty;
     private string _appSettingsErrorMessage = string.Empty;
+
+    /// <summary>
+    /// 창 위치와 크기를 기본값으로 되돌려야 할 때 발생합니다.
+    /// 실제 Window 처리는 상위 애플리케이션 흐름에 위임합니다.
+    /// </summary>
+    public event Action? WindowResetRequested;
 
     /// <summary>
     /// Windows 로그인 시 DesktopSchedule을 자동으로 실행할지 여부입니다.
@@ -113,11 +118,10 @@ public class SettingsViewModel : ViewModelBase
     /// </summary>
     public RelayCommand ResetSettingsCommand { get; }
 
-    public SettingsViewModel(StartupService startupService, AppSettingsService appSettingsService, WindowPlacementService windowPlacementService)
+    public SettingsViewModel(StartupService startupService, AppSettingsService appSettingsService)
     {
         _startupService = startupService ?? throw new ArgumentNullException(nameof(startupService));
         _appSettingsService = appSettingsService ?? throw new ArgumentNullException(nameof(appSettingsService));
-        _windowPlacementService = windowPlacementService ?? throw new ArgumentNullException(nameof(windowPlacementService));
 
         ResetSettingsCommand = new RelayCommand(_ => ResetSettings());
 
@@ -142,14 +146,14 @@ public class SettingsViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// 앱 표시 설정과 창 위치 및 크기를 기본값으로 되돌립니다.
+    /// 앱 표시 설정을 기본값으로 저장한 뒤 창 위치와 크기 초기화를 요청합니다.
     /// </summary>
     private void ResetSettings()
     {
         ApplyAppSetting(() =>
         {
             _appSettingsService.ResetToDefault();
-            _windowPlacementService.ResetToDefault();
+            WindowResetRequested?.Invoke();
         }, "설정을 초기화하지 못했습니다.", nameof(IsTopmost), nameof(ShowInTaskbar));
     }
 
