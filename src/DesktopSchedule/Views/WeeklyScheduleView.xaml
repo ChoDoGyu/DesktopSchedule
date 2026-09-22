@@ -11,6 +11,77 @@
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+
+        <Style x:Key="WeeklyDayHeaderButtonStyle"
+               TargetType="Button"
+               BasedOn="{StaticResource AppButtonBaseStyle}">
+            <Setter Property="Height" Value="42" />
+            <Setter Property="Padding" Value="4" />
+            <Setter Property="Background" Value="{StaticResource AppBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource DividerBrush}" />
+            <Setter Property="BorderThickness" Value="0,0,1,1" />
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="FontSize" Value="14" />
+
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#F8FBFF" />
+                </Trigger>
+
+                <DataTrigger Binding="{Binding IsToday}" Value="True">
+                    <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+                    <Setter Property="FontWeight" Value="SemiBold" />
+                </DataTrigger>
+
+                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                    <Setter Property="Background" Value="{StaticResource PrimaryLightBrush}" />
+                    <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
+                    <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+                    <Setter Property="FontWeight" Value="SemiBold" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="WeeklyScheduleCardButtonStyle"
+               TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource ScheduleBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource ScheduleBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="Padding" Value="5,2" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Opacity" Value="1" />
+
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
+                </Trigger>
+
+                <DataTrigger Binding="{Binding IsCompleted}" Value="True">
+                    <Setter Property="Background" Value="{StaticResource CompletedBackgroundBrush}" />
+                    <Setter Property="BorderBrush" Value="{StaticResource CompletedBorderBrush}" />
+                    <Setter Property="Foreground" Value="{StaticResource CompletedTextBrush}" />
+                    <Setter Property="Opacity" Value="0.72" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
 
     <Grid x:Name="DragSurface"
@@ -22,38 +93,12 @@
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <Grid Grid.Row="0" Margin="0,0,0,8">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
+            <Grid Grid.Row="0"
+                  Margin="0,0,0,16">
 
-                <Button Grid.Column="0"
-                        Content="&lt;"
-                        Command="{Binding PreviousWeekCommand}"
-                        Width="36"
-                        Height="30" />
-
-                <TextBlock Grid.Column="1"
-                           Text="{Binding WeekRangeText}"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center"
-                           FontSize="16"
-                           FontWeight="SemiBold" />
-
-                <Button Grid.Column="2"
-                        Content="&gt;"
-                        Command="{Binding NextWeekCommand}"
-                        Width="36"
-                        Height="30" />
-            </Grid>
-
-            <Grid Grid.Row="1" Margin="0,0,0,10">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
@@ -63,22 +108,45 @@
                 <CheckBox Grid.Column="0"
                           Content="완료 일정 보기"
                           IsChecked="{Binding ShowCompletedSchedules}"
+                          Style="{StaticResource AppCheckBoxStyle}"
                           VerticalAlignment="Center"
                           HorizontalAlignment="Left" />
 
-                <Button Grid.Column="1"
-                        Content="이번 주"
-                        Command="{Binding CurrentWeekCommand}"
-                        Padding="12,5" />
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+
+                    <Button Content="‹"
+                            Command="{Binding PreviousWeekCommand}"
+                            Style="{StaticResource AppNavigationButtonStyle}"
+                            Margin="0,0,8,0" />
+
+                    <TextBlock Text="{Binding WeekRangeText}"
+                               Style="{StaticResource AppDisplayTitleTextStyle}"
+                               Width="230"
+                               TextAlignment="Center"
+                               VerticalAlignment="Center" />
+
+                    <Button Content="›"
+                            Command="{Binding NextWeekCommand}"
+                            Style="{StaticResource AppNavigationButtonStyle}"
+                            Margin="8,0,0,0" />
+
+                    <Button Content="이번 주"
+                            Command="{Binding CurrentWeekCommand}"
+                            Style="{StaticResource AppSecondaryButtonStyle}"
+                            Margin="8,0,0,0" />
+                </StackPanel>
 
                 <Button Grid.Column="2"
-                        Content="+ 일정"
+                        Content="새 일정"
                         Command="{Binding OpenNewScheduleCommand}"
-                        HorizontalAlignment="Right"
-                        Padding="12,5" />
+                        Style="{StaticResource AppPrimaryButtonStyle}"
+                        HorizontalAlignment="Right" />
             </Grid>
 
-            <Grid Grid.Row="2">
+            <Grid Grid.Row="1">
                 <Grid>
                     <Grid.Style>
                         <Style TargetType="Grid">
@@ -119,37 +187,24 @@
                                     <DataTemplate>
                                         <Button Command="{Binding DataContext.OpenNewScheduleForDateCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                 CommandParameter="{Binding}"
-                                                Height="42"
-                                                BorderThickness="0,0,1,1"
-                                                BorderBrush="LightGray"
-                                                Padding="4">
+                                                Style="{StaticResource WeeklyDayHeaderButtonStyle}">
 
-                                            <Button.Style>
-                                                <Style TargetType="Button">
-                                                    <Setter Property="Background" Value="Transparent" />
+                                            <StackPanel Orientation="Horizontal"
+                                                        HorizontalAlignment="Center">
 
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsToday}" Value="True">
-                                                            <Setter Property="FontWeight" Value="Bold" />
-                                                        </DataTrigger>
+                                                <TextBlock Text="{Binding DayName}" />
 
-                                                        <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                                            <Setter Property="Background" Value="Gainsboro" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Button.Style>
-
-                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                                <TextBlock Text="{Binding DayName}" FontSize="15" />
-                                                <TextBlock Text="{Binding DayText}" Margin="6,0,0,0" FontSize="15" />
+                                                <TextBlock Text="{Binding DayText}"
+                                                           Margin="6,0,0,0" />
                                             </StackPanel>
                                         </Button>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
 
-                            <Grid Grid.Row="1" MinHeight="338">
+                            <Grid Grid.Row="1"
+                                  MinHeight="338">
+
                                 <ItemsControl ItemsSource="{Binding Days}"
                                               Panel.ZIndex="0"
                                               IsHitTestVisible="False"
@@ -163,14 +218,21 @@
 
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Border BorderBrush="LightGray" BorderThickness="0,0,1,0">
+                                            <Border BorderBrush="{StaticResource DividerBrush}"
+                                                    BorderThickness="0,0,1,0">
+
                                                 <Border.Style>
                                                     <Style TargetType="Border">
-                                                        <Setter Property="Background" Value="Transparent" />
+                                                        <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
 
                                                         <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsToday}" Value="True">
+                                                                <Setter Property="Background" Value="#F8FBFF" />
+                                                            </DataTrigger>
+
                                                             <DataTrigger Binding="{Binding IsDropTarget}" Value="True">
-                                                                <Setter Property="Background" Value="AliceBlue" />
+                                                                <Setter Property="Background" Value="#E6F4EA" />
+                                                                <Setter Property="BorderBrush" Value="#66A879" />
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
@@ -194,49 +256,17 @@
 
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Button HorizontalContentAlignment="Stretch"
-                                                    VerticalContentAlignment="Center"
-                                                    BorderThickness="1"
-                                                    Padding="5,2"
+                                            <Button Style="{StaticResource WeeklyScheduleCardButtonStyle}"
                                                     ToolTip="{Binding ToolTipText}"
                                                     PreviewMouseLeftButtonDown="ScheduleButton_PreviewMouseLeftButtonDown">
-
-                                                <Button.Style>
-                                                    <Style TargetType="Button">
-                                                        <Setter Property="Background" Value="#DCEBFF" />
-                                                        <Setter Property="BorderBrush" Value="#8CB8F0" />
-                                                        <Setter Property="Opacity" Value="1" />
-
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsCompleted}" Value="True">
-                                                                <Setter Property="Background" Value="#E7E7E7" />
-                                                                <Setter Property="BorderBrush" Value="#BDBDBD" />
-                                                                <Setter Property="Opacity" Value="0.58" />
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Button.Style>
 
                                                 <TextBlock Text="{Binding DisplayText}"
                                                            FontSize="12"
                                                            FontWeight="SemiBold"
+                                                           Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
                                                            VerticalAlignment="Center"
                                                            TextTrimming="CharacterEllipsis"
-                                                           TextWrapping="NoWrap">
-
-                                                    <TextBlock.Style>
-                                                        <Style TargetType="TextBlock">
-                                                            <Setter Property="Foreground" Value="#202020" />
-
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding IsCompleted}" Value="True">
-                                                                    <Setter Property="Foreground" Value="#666666" />
-                                                                    <Setter Property="TextDecorations" Value="Strikethrough" />
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </TextBlock.Style>
-                                                </TextBlock>
+                                                           TextWrapping="NoWrap" />
                                             </Button>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
@@ -246,17 +276,20 @@
                     </ScrollViewer>
                 </Grid>
 
-                <Border BorderBrush="LightGray"
-                        BorderThickness="1"
-                        CornerRadius="6"
-                        Padding="12"
+                <Border Style="{StaticResource AppPanelBorderStyle}"
+                        MinWidth="480"
+                        MaxWidth="620"
+                        HorizontalAlignment="Center"
                         Visibility="{Binding IsEditorOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
+
                     <views:ScheduleEditorView />
                 </Border>
             </Grid>
         </Grid>
 
-        <Canvas IsHitTestVisible="False" Panel.ZIndex="1000">
+        <Canvas IsHitTestVisible="False"
+                Panel.ZIndex="1000">
+
             <controls:ScheduleDragPreview x:Name="DragPreview" />
         </Canvas>
     </Grid>
