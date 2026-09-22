@@ -4,30 +4,111 @@
 
     <Style x:Key="ScheduleCalendarDayButtonStyle"
            TargetType="{x:Type CalendarDayButton}">
-        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="MinWidth" Value="36" />
-        <Setter Property="MinHeight" Value="30" />
+        <Setter Property="MinHeight" Value="32" />
         <Setter Property="Margin" Value="1" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{StaticResource PrimaryLightBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource ScheduleBorderBrush}" />
+            </Trigger>
+
+            <Trigger Property="IsToday" Value="True">
+                <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+            </Trigger>
+
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
+                <Setter Property="Foreground" Value="White" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+            </Trigger>
+
+            <Trigger Property="IsInactive" Value="True">
+                <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+                <Setter Property="Opacity" Value="0.65" />
+            </Trigger>
+
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+                <Setter Property="Opacity" Value="0.45" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <Style x:Key="ScheduleCalendarButtonStyle"
            TargetType="{x:Type CalendarButton}">
-        <Setter Property="FontSize" Value="15" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="MinWidth" Value="54" />
         <Setter Property="MinHeight" Value="40" />
+        <Setter Property="Margin" Value="2" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{StaticResource PrimaryLightBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource ScheduleBorderBrush}" />
+            </Trigger>
+
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+                <Setter Property="Opacity" Value="0.45" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <Style x:Key="ScheduleCalendarStyle"
            TargetType="{x:Type Calendar}">
         <Setter Property="Width" Value="320" />
         <Setter Property="Height" Value="300" />
-        <Setter Property="FontSize" Value="15" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+        <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CalendarDayButtonStyle" Value="{StaticResource ScheduleCalendarDayButtonStyle}" />
         <Setter Property="CalendarButtonStyle" Value="{StaticResource ScheduleCalendarButtonStyle}" />
     </Style>
 
     <Style TargetType="{x:Type controls:ScheduleDatePicker}">
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+        <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="MinHeight" Value="32" />
+        <Setter Property="Padding" Value="8,4" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="CalendarStyle" Value="{StaticResource ScheduleCalendarStyle}" />
+
+        <Style.Triggers>
+            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
+            </Trigger>
+
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.55" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
 </ResourceDictionary>

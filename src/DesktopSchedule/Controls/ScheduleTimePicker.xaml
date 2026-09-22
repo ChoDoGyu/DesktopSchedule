@@ -3,11 +3,30 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Focusable="False">
 
+    <UserControl.Resources>
+        <Style x:Key="TimePickerOpenButtonStyle"
+               TargetType="Button"
+               BasedOn="{StaticResource AppSecondaryButtonStyle}">
+            <Setter Property="MinHeight" Value="32" />
+            <Setter Property="Padding" Value="8,4" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        </Style>
+
+        <Style x:Key="TimePickerValueTextBoxStyle"
+               TargetType="TextBox"
+               BasedOn="{StaticResource AppTextBoxStyle}">
+            <Setter Property="FontSize" Value="18" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="TextAlignment" Value="Center" />
+            <Setter Property="Padding" Value="6" />
+            <Setter Property="MinHeight" Value="40" />
+        </Style>
+    </UserControl.Resources>
+
     <Grid>
         <Button x:Name="OpenButton"
                 Click="OpenButton_Click"
-                Padding="6"
-                HorizontalContentAlignment="Stretch">
+                Style="{StaticResource TimePickerOpenButtonStyle}">
 
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -17,13 +36,17 @@
 
                 <TextBlock x:Name="DisplayTextBlock"
                            Grid.Column="0"
+                           FontFamily="{StaticResource AppFontFamily}"
+                           FontSize="13"
+                           Foreground="{StaticResource TextPrimaryBrush}"
                            VerticalAlignment="Center" />
 
                 <TextBlock Grid.Column="1"
-                           Text="▼"
-                           FontSize="9"
+                           Text="▾"
+                           FontSize="11"
+                           Foreground="{StaticResource TextSecondaryBrush}"
                            VerticalAlignment="Center"
-                           Margin="6,0,0,0" />
+                           Margin="8,0,0,0" />
             </Grid>
         </Button>
 
@@ -35,14 +58,16 @@
                AllowsTransparency="True"
                Closed="TimePopup_Closed">
 
-            <Border Background="White"
-                    BorderBrush="LightGray"
-                    BorderThickness="1"
-                    CornerRadius="6"
-                    Padding="12">
+            <Border Style="{StaticResource AppPopupBorderStyle}"
+                    Padding="14">
 
                 <StackPanel>
-                    <Grid>
+                    <TextBlock Text="시간 선택"
+                               Style="{StaticResource AppSectionTitleTextStyle}"
+                               FontSize="15"
+                               Margin="0,0,0,14" />
+
+                    <Grid Margin="0,0,0,6">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="64" />
                             <ColumnDefinition Width="24" />
@@ -51,13 +76,13 @@
 
                         <TextBlock Grid.Column="0"
                                    Text="시간"
-                                   HorizontalAlignment="Center"
-                                   Margin="0,0,0,6" />
+                                   Style="{StaticResource AppCaptionTextStyle}"
+                                   HorizontalAlignment="Center" />
 
                         <TextBlock Grid.Column="2"
                                    Text="분"
-                                   HorizontalAlignment="Center"
-                                   Margin="0,0,0,6" />
+                                   Style="{StaticResource AppCaptionTextStyle}"
+                                   HorizontalAlignment="Center" />
                     </Grid>
 
                     <Grid>
@@ -70,9 +95,7 @@
                         <TextBox x:Name="HourTextBox"
                                  Grid.Column="0"
                                  MaxLength="2"
-                                 FontSize="18"
-                                 TextAlignment="Center"
-                                 Padding="6"
+                                 Style="{StaticResource TimePickerValueTextBoxStyle}"
                                  PreviewTextInput="NumericTextBox_PreviewTextInput"
                                  GotKeyboardFocus="NumericTextBox_GotKeyboardFocus"
                                  LostKeyboardFocus="HourTextBox_LostKeyboardFocus"
@@ -81,16 +104,17 @@
 
                         <TextBlock Grid.Column="1"
                                    Text=":"
+                                   FontFamily="{StaticResource AppFontFamily}"
                                    FontSize="18"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
                                    HorizontalAlignment="Center"
                                    VerticalAlignment="Center" />
 
                         <TextBox x:Name="MinuteTextBox"
                                  Grid.Column="2"
                                  MaxLength="2"
-                                 FontSize="18"
-                                 TextAlignment="Center"
-                                 Padding="6"
+                                 Style="{StaticResource TimePickerValueTextBoxStyle}"
                                  PreviewTextInput="NumericTextBox_PreviewTextInput"
                                  GotKeyboardFocus="NumericTextBox_GotKeyboardFocus"
                                  LostKeyboardFocus="MinuteTextBox_LostKeyboardFocus"
@@ -99,10 +123,9 @@
                     </Grid>
 
                     <TextBlock Text="마우스 휠로 1씩 조절"
-                               FontSize="11"
-                               Foreground="DimGray"
+                               Style="{StaticResource AppCaptionTextStyle}"
                                HorizontalAlignment="Center"
-                               Margin="0,8,0,0" />
+                               Margin="0,10,0,0" />
                 </StackPanel>
             </Border>
         </Popup>
