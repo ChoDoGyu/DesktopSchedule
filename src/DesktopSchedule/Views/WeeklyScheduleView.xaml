@@ -4,6 +4,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:controls="clr-namespace:DesktopSchedule.Controls"
+             xmlns:views="clr-namespace:DesktopSchedule.Views"
              mc:Ignorable="d"
              d:DesignHeight="600"
              d:DesignWidth="1000">
@@ -25,9 +26,7 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <Grid Grid.Row="0"
-                  Margin="0,0,0,8">
-
+            <Grid Grid.Row="0" Margin="0,0,0,8">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
@@ -54,9 +53,7 @@
                         Height="30" />
             </Grid>
 
-            <Grid Grid.Row="1"
-                  Margin="0,0,0,10">
-
+            <Grid Grid.Row="1" Margin="0,0,0,10">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
@@ -82,18 +79,14 @@
             </Grid>
 
             <Grid Grid.Row="2">
-
                 <Grid>
                     <Grid.Style>
                         <Style TargetType="Grid">
-                            <Setter Property="Visibility"
-                                    Value="Visible" />
+                            <Setter Property="Visibility" Value="Visible" />
 
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsEditorOpen}"
-                                             Value="True">
-                                    <Setter Property="Visibility"
-                                            Value="Collapsed" />
+                                <DataTrigger Binding="{Binding IsEditorOpen}" Value="True">
+                                    <Setter Property="Visibility" Value="Collapsed" />
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
@@ -124,7 +117,6 @@
 
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-
                                         <Button Command="{Binding DataContext.OpenNewScheduleForDateCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                 CommandParameter="{Binding}"
                                                 Height="42"
@@ -134,43 +126,30 @@
 
                                             <Button.Style>
                                                 <Style TargetType="Button">
-                                                    <Setter Property="Background"
-                                                            Value="Transparent" />
+                                                    <Setter Property="Background" Value="Transparent" />
 
                                                     <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsToday}"
-                                                                     Value="True">
-                                                            <Setter Property="FontWeight"
-                                                                    Value="Bold" />
+                                                        <DataTrigger Binding="{Binding IsToday}" Value="True">
+                                                            <Setter Property="FontWeight" Value="Bold" />
                                                         </DataTrigger>
 
-                                                        <DataTrigger Binding="{Binding IsSelected}"
-                                                                     Value="True">
-                                                            <Setter Property="Background"
-                                                                    Value="Gainsboro" />
+                                                        <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                            <Setter Property="Background" Value="Gainsboro" />
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
                                             </Button.Style>
 
-                                            <StackPanel Orientation="Horizontal"
-                                                        HorizontalAlignment="Center">
-
-                                                <TextBlock Text="{Binding DayName}"
-                                                           FontSize="15" />
-
-                                                <TextBlock Text="{Binding DayText}"
-                                                           Margin="6,0,0,0"
-                                                           FontSize="15" />
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                                <TextBlock Text="{Binding DayName}" FontSize="15" />
+                                                <TextBlock Text="{Binding DayText}" Margin="6,0,0,0" FontSize="15" />
                                             </StackPanel>
                                         </Button>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
 
-                            <Grid Grid.Row="1"
-                                  MinHeight="338">
-
+                            <Grid Grid.Row="1" MinHeight="338">
                                 <ItemsControl ItemsSource="{Binding Days}"
                                               Panel.ZIndex="0"
                                               IsHitTestVisible="False"
@@ -184,20 +163,14 @@
 
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-
-                                            <Border BorderBrush="LightGray"
-                                                    BorderThickness="0,0,1,0">
-
+                                            <Border BorderBrush="LightGray" BorderThickness="0,0,1,0">
                                                 <Border.Style>
                                                     <Style TargetType="Border">
-                                                        <Setter Property="Background"
-                                                                Value="Transparent" />
+                                                        <Setter Property="Background" Value="Transparent" />
 
                                                         <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsDropTarget}"
-                                                                         Value="True">
-                                                                <Setter Property="Background"
-                                                                        Value="AliceBlue" />
+                                                            <DataTrigger Binding="{Binding IsDropTarget}" Value="True">
+                                                                <Setter Property="Background" Value="AliceBlue" />
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
@@ -221,7 +194,6 @@
 
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-
                                             <Button HorizontalContentAlignment="Stretch"
                                                     VerticalContentAlignment="Center"
                                                     BorderThickness="1"
@@ -231,26 +203,15 @@
 
                                                 <Button.Style>
                                                     <Style TargetType="Button">
-                                                        <Setter Property="Background"
-                                                                Value="#DCEBFF" />
-
-                                                        <Setter Property="BorderBrush"
-                                                                Value="#8CB8F0" />
-
-                                                        <Setter Property="Opacity"
-                                                                Value="1" />
+                                                        <Setter Property="Background" Value="#DCEBFF" />
+                                                        <Setter Property="BorderBrush" Value="#8CB8F0" />
+                                                        <Setter Property="Opacity" Value="1" />
 
                                                         <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsCompleted}"
-                                                                         Value="True">
-                                                                <Setter Property="Background"
-                                                                        Value="#E7E7E7" />
-
-                                                                <Setter Property="BorderBrush"
-                                                                        Value="#BDBDBD" />
-
-                                                                <Setter Property="Opacity"
-                                                                        Value="0.58" />
+                                                            <DataTrigger Binding="{Binding IsCompleted}" Value="True">
+                                                                <Setter Property="Background" Value="#E7E7E7" />
+                                                                <Setter Property="BorderBrush" Value="#BDBDBD" />
+                                                                <Setter Property="Opacity" Value="0.58" />
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
@@ -265,17 +226,12 @@
 
                                                     <TextBlock.Style>
                                                         <Style TargetType="TextBlock">
-                                                            <Setter Property="Foreground"
-                                                                    Value="#202020" />
+                                                            <Setter Property="Foreground" Value="#202020" />
 
                                                             <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding IsCompleted}"
-                                                                             Value="True">
-                                                                    <Setter Property="Foreground"
-                                                                            Value="#666666" />
-
-                                                                    <Setter Property="TextDecorations"
-                                                                            Value="Strikethrough" />
+                                                                <DataTrigger Binding="{Binding IsCompleted}" Value="True">
+                                                                    <Setter Property="Foreground" Value="#666666" />
+                                                                    <Setter Property="TextDecorations" Value="Strikethrough" />
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
@@ -285,7 +241,6 @@
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
-
                             </Grid>
                         </Grid>
                     </ScrollViewer>
@@ -296,196 +251,12 @@
                         CornerRadius="6"
                         Padding="12"
                         Visibility="{Binding IsEditorOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
-
-                    <ScrollViewer VerticalScrollBarVisibility="Auto"
-                                  HorizontalScrollBarVisibility="Disabled">
-
-                        <StackPanel>
-
-                            <TextBlock Text="{Binding EditorTitle}"
-                                       FontSize="20"
-                                       FontWeight="SemiBold"
-                                       Margin="0,0,0,12" />
-
-                            <TextBlock Text="제목"
-                                       Margin="0,0,0,4" />
-
-                            <TextBox Text="{Binding NewTitle, UpdateSourceTrigger=PropertyChanged}"
-                                     Padding="6"
-                                     Margin="0,0,0,10" />
-
-                            <TextBlock Text="설명"
-                                       Margin="0,0,0,4" />
-
-                            <TextBox Text="{Binding NewDescription, UpdateSourceTrigger=PropertyChanged}"
-                                     Height="70"
-                                     AcceptsReturn="True"
-                                     TextWrapping="Wrap"
-                                     VerticalScrollBarVisibility="Auto"
-                                     Padding="6"
-                                     Margin="0,0,0,10" />
-
-                            <TextBlock Text="시작"
-                                       Margin="0,0,0,4" />
-
-                            <Grid Margin="0,0,0,10">
-
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="8" />
-                                    <ColumnDefinition Width="90" />
-                                </Grid.ColumnDefinitions>
-
-                                <controls:ScheduleDatePicker Grid.Column="0"
-                                                             SelectedDate="{Binding NewStartDate}" />
-
-                                <TextBox Grid.Column="2"
-                                         Text="{Binding NewStartTime, UpdateSourceTrigger=PropertyChanged}"
-                                         Padding="6" />
-                            </Grid>
-
-                            <TextBlock Text="종료"
-                                       Margin="0,0,0,4" />
-
-                            <Grid Margin="0,0,0,10">
-
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="8" />
-                                    <ColumnDefinition Width="90" />
-                                </Grid.ColumnDefinitions>
-
-                                <controls:ScheduleDatePicker Grid.Column="0"
-                                                             SelectedDate="{Binding NewEndDate}" />
-
-                                <TextBox Grid.Column="2"
-                                         Text="{Binding NewEndTime, UpdateSourceTrigger=PropertyChanged}"
-                                         Padding="6" />
-                            </Grid>
-
-                            <CheckBox Content="하루 종일"
-                                      IsChecked="{Binding NewIsAllDay}"
-                                      Margin="0,0,0,10" />
-
-                            <CheckBox Content="알림 사용"
-                                      IsChecked="{Binding NewIsReminderEnabled}"
-                                      Margin="0,0,0,8" />
-
-                            <StackPanel Orientation="Horizontal"
-                                        Margin="0,0,0,10">
-
-                                <ComboBox ItemsSource="{Binding ReminderMinuteOptions}"
-                                          SelectedItem="{Binding NewReminderMinutesBefore}"
-                                          IsEnabled="{Binding NewIsReminderEnabled}"
-                                          Width="100" />
-
-                                <TextBlock Text="분 전 알림"
-                                           VerticalAlignment="Center"
-                                           Margin="8,0,0,0" />
-                            </StackPanel>
-
-                            <TextBlock Text="{Binding ErrorMessage}"
-                                       TextWrapping="Wrap"
-                                       Margin="0,0,0,10" />
-
-                            <WrapPanel HorizontalAlignment="Right">
-
-                                <Button Content="완료"
-                                        Command="{Binding MarkAsCompletedCommand}"
-                                        Padding="12,6"
-                                        Margin="0,0,6,0">
-
-                                    <Button.Style>
-                                        <Style TargetType="Button">
-                                            <Setter Property="Visibility"
-                                                    Value="Collapsed" />
-
-                                            <Style.Triggers>
-                                                <MultiDataTrigger>
-                                                    <MultiDataTrigger.Conditions>
-                                                        <Condition Binding="{Binding IsEditMode}"
-                                                                   Value="True" />
-
-                                                        <Condition Binding="{Binding IsEditingCompleted}"
-                                                                   Value="False" />
-                                                    </MultiDataTrigger.Conditions>
-
-                                                    <Setter Property="Visibility"
-                                                            Value="Visible" />
-                                                </MultiDataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Button.Style>
-                                </Button>
-
-                                <Button Content="완료 취소"
-                                        Command="{Binding MarkAsIncompleteCommand}"
-                                        Padding="12,6"
-                                        Margin="0,0,6,0">
-
-                                    <Button.Style>
-                                        <Style TargetType="Button">
-                                            <Setter Property="Visibility"
-                                                    Value="Collapsed" />
-
-                                            <Style.Triggers>
-                                                <MultiDataTrigger>
-                                                    <MultiDataTrigger.Conditions>
-                                                        <Condition Binding="{Binding IsEditMode}"
-                                                                   Value="True" />
-
-                                                        <Condition Binding="{Binding IsEditingCompleted}"
-                                                                   Value="True" />
-                                                    </MultiDataTrigger.Conditions>
-
-                                                    <Setter Property="Visibility"
-                                                            Value="Visible" />
-                                                </MultiDataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Button.Style>
-                                </Button>
-
-                                <Button Content="삭제"
-                                        Command="{Binding DeleteScheduleCommand}"
-                                        Padding="12,6"
-                                        Margin="0,0,6,0">
-
-                                    <Button.Style>
-                                        <Style TargetType="Button">
-                                            <Setter Property="Visibility"
-                                                    Value="Collapsed" />
-
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsEditMode}"
-                                                             Value="True">
-                                                    <Setter Property="Visibility"
-                                                            Value="Visible" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Button.Style>
-                                </Button>
-
-                                <Button Content="취소"
-                                        Command="{Binding CancelEditCommand}"
-                                        Padding="12,6"
-                                        Margin="0,0,6,0" />
-
-                                <Button Content="저장"
-                                        Command="{Binding SaveScheduleCommand}"
-                                        Padding="12,6" />
-
-                            </WrapPanel>
-                        </StackPanel>
-                    </ScrollViewer>
+                    <views:ScheduleEditorView />
                 </Border>
             </Grid>
         </Grid>
 
-        <Canvas IsHitTestVisible="False"
-                Panel.ZIndex="1000">
-
+        <Canvas IsHitTestVisible="False" Panel.ZIndex="1000">
             <controls:ScheduleDragPreview x:Name="DragPreview" />
         </Canvas>
     </Grid>

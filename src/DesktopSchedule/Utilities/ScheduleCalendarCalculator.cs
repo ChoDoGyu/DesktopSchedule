@@ -14,17 +14,6 @@ namespace DesktopSchedule.Utilities;
 public static class ScheduleCalendarCalculator
 {
     /// <summary>
-    /// 일정이 달력에서 두 개 이상의 날짜 셀을 차지하는지 확인합니다.
-    /// 실제 마지막 표시 날짜가 시작 날짜보다 뒤에 있으면 연결 일정으로 판단합니다.
-    /// </summary>
-    public static bool IsSpanningSchedule(ScheduleItem schedule)
-    {
-        ArgumentNullException.ThrowIfNull(schedule);
-
-        return GetLastDisplayDate(schedule) > schedule.StartAt.Date;
-    }
-
-    /// <summary>
     /// 일정이 달력에서 실제로 마지막으로 차지해야 하는 날짜를 반환합니다.
     /// </summary>
     /// <remarks>
@@ -49,8 +38,7 @@ public static class ScheduleCalendarCalculator
             return schedule.EndAt.Date;
         }
 
-        if (schedule.EndAt > schedule.StartAt &&
-            schedule.EndAt.TimeOfDay == TimeSpan.Zero)
+        if (schedule.EndAt > schedule.StartAt && schedule.EndAt.TimeOfDay == TimeSpan.Zero)
         {
             return schedule.EndAt.Date.AddDays(-1);
         }
@@ -69,15 +57,13 @@ public static class ScheduleCalendarCalculator
 
         if (schedule.IsAllDay)
         {
-            return schedule.StartAt.Date <= targetDate &&
-                   schedule.EndAt.Date >= targetDate;
+            return schedule.StartAt.Date <= targetDate && schedule.EndAt.Date >= targetDate;
         }
 
         var dayStart = targetDate;
         var dayEnd = dayStart.AddDays(1);
 
-        return schedule.StartAt < dayEnd &&
-               schedule.EndAt > dayStart;
+        return schedule.StartAt < dayEnd && schedule.EndAt > dayStart;
     }
 
     /// <summary>
@@ -93,7 +79,6 @@ public static class ScheduleCalendarCalculator
 
         var normalizedWeekStart = weekStartDate.Date;
         var weekEndDate = normalizedWeekStart.AddDays(6);
-
         var candidates = new List<CalendarScheduleCandidate>();
 
         foreach (var schedule in schedules)
@@ -101,31 +86,23 @@ public static class ScheduleCalendarCalculator
             var scheduleStartDate = schedule.StartAt.Date;
             var scheduleEndDate = GetLastDisplayDate(schedule);
 
-            if (scheduleEndDate < normalizedWeekStart ||
-                scheduleStartDate > weekEndDate)
+            if (scheduleEndDate < normalizedWeekStart || scheduleStartDate > weekEndDate)
             {
                 continue;
             }
 
-            var visibleStartDate = scheduleStartDate < normalizedWeekStart
-                ? normalizedWeekStart
-                : scheduleStartDate;
-
-            var visibleEndDate = scheduleEndDate > weekEndDate
-                ? weekEndDate
-                : scheduleEndDate;
-
+            var visibleStartDate = scheduleStartDate < normalizedWeekStart ? normalizedWeekStart : scheduleStartDate;
+            var visibleEndDate = scheduleEndDate > weekEndDate ? weekEndDate : scheduleEndDate;
             var startDayIndex = (visibleStartDate - normalizedWeekStart).Days;
             var endDayIndex = (visibleEndDate - normalizedWeekStart).Days;
 
-            candidates.Add(
-                new CalendarScheduleCandidate(
-                    schedule,
-                    visibleStartDate,
-                    visibleEndDate,
-                    startDayIndex,
-                    endDayIndex,
-                    scheduleEndDate > visibleEndDate));
+            candidates.Add(new CalendarScheduleCandidate(
+                schedule,
+                visibleStartDate,
+                visibleEndDate,
+                startDayIndex,
+                endDayIndex,
+                scheduleEndDate > visibleEndDate));
         }
 
         var orderedCandidates = candidates
@@ -154,16 +131,15 @@ public static class ScheduleCalendarCalculator
 
             var daySpan = candidate.EndDayIndex - candidate.StartDayIndex + 1;
 
-            placements.Add(
-                new CalendarSchedulePlacement(
-                    candidate.Schedule,
-                    candidate.VisibleStartDate,
-                    candidate.VisibleEndDate,
-                    candidate.StartDayIndex,
-                    candidate.EndDayIndex,
-                    daySpan,
-                    rowIndex,
-                    candidate.ContinuesToNextWeek));
+            placements.Add(new CalendarSchedulePlacement(
+                candidate.Schedule,
+                candidate.VisibleStartDate,
+                candidate.VisibleEndDate,
+                candidate.StartDayIndex,
+                candidate.EndDayIndex,
+                daySpan,
+                rowIndex,
+                candidate.ContinuesToNextWeek));
         }
 
         return new CalendarWeekLayout(placements, rowEndDayIndices.Count);

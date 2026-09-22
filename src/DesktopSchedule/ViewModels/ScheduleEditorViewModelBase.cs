@@ -6,17 +6,17 @@ using DesktopSchedule.Services; // ScheduleService를 사용하기 위해 필요
 namespace DesktopSchedule.ViewModels;
 
 /// <summary>
-/// 주간과 월간 일정 화면에서 공통으로 사용하는
+/// 월간, 주간, 일간 화면에서 공통으로 사용하는
 /// 일정 편집 상태와 CRUD 동작을 관리하는 기반 ViewModel입니다.
 /// </summary>
 /// <remarks>
-/// 날짜 배치 방식이나 달력 구성은 주간과 월간이 서로 다르므로
+/// 화면 구성과 일정 배치 방식은 월간, 주간, 일간이 서로 다르므로
 /// 이 클래스에서는 일정 편집과 저장에 관한 공통 책임만 관리합니다.
 /// </remarks>
 public abstract class ScheduleEditorViewModelBase : ViewModelBase
 {
     // 실제 일정 데이터의 조회와 변경을 담당하는 Service입니다.
-    // 주간과 월간 ViewModel에서도 Drag 이동과 일정 조회에 사용할 수 있도록
+    // 월간, 주간, 일간 ViewModel에서도 Drag 이동과 일정 조회에 사용할 수 있도록
     // protected 속성으로 제공합니다.
     protected ScheduleService ScheduleService { get; }
 
@@ -30,7 +30,7 @@ public abstract class ScheduleEditorViewModelBase : ViewModelBase
     // 일정 편집기를 화면에 표시할지 여부입니다.
     private bool _isEditorOpen;
 
-    // 완료된 일정도 달력에 표시할지 여부입니다.
+    // 완료된 일정도 기본 일정 표시 영역에 포함할지 여부입니다.
     private bool _showCompletedSchedules;
 
     // 일정 제목 입력값입니다.
@@ -124,7 +124,7 @@ public abstract class ScheduleEditorViewModelBase : ViewModelBase
     }
 
     /// <summary>
-    /// 완료된 일정까지 달력에 표시할지 여부입니다.
+    /// 완료된 일정을 각 화면의 기본 일정 표시 영역에 포함할지 여부입니다.
     /// 값이 변경되면 파생 ViewModel이 자신의 일정 화면을 다시 구성합니다.
     /// </summary>
     public bool ShowCompletedSchedules
@@ -290,7 +290,7 @@ public abstract class ScheduleEditorViewModelBase : ViewModelBase
 
     /// <summary>
     /// 일정 데이터가 변경되었을 때
-    /// 파생 ViewModel이 자신의 달력 화면을 다시 구성하도록 요청합니다.
+    /// 파생 ViewModel이 자신의 일정 화면을 다시 구성하도록 요청합니다.
     /// </summary>
     protected abstract void RefreshSchedules();
 
@@ -311,7 +311,7 @@ public abstract class ScheduleEditorViewModelBase : ViewModelBase
 
     /// <summary>
     /// 일정 편집기를 닫고 편집 중인 상태와 입력값을 초기화합니다.
-    /// 주간 또는 월간 이동 시에도 사용할 수 있도록 protected로 제공합니다.
+    /// 월간, 주간, 일간의 기준 날짜 이동 시에도 사용할 수 있도록 protected로 제공합니다.
     /// </summary>
     protected void CloseEditor()
     {

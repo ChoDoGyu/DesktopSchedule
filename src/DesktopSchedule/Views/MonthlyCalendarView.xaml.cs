@@ -14,7 +14,7 @@ namespace DesktopSchedule.Views;
 /// </summary>
 public partial class MonthlyCalendarView : UserControl
 {
-    // 주간과 월간에서 공통으로 사용하는 일정 Drag 상태 및 동작을 관리합니다.
+    // 월간, 주간, 일간에서 공통으로 사용하는 일정 Drag 상태 및 동작을 관리합니다.
     private readonly ScheduleDragController _dragController;
 
     public MonthlyCalendarView()
