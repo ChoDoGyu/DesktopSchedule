@@ -1,6 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using DesktopSchedule.Controls;
 using DesktopSchedule.Utilities;
 using DesktopSchedule.ViewModels;
@@ -9,39 +10,29 @@ namespace DesktopSchedule.Views;
 
 /// <summary>
 /// 선택 날짜의 시간 일정과 일정 목록을 표시하는 일간 View입니다.
-/// 일정 클릭과 Drag 입력을 구분하며,
-/// 공통 ScheduleDragController를 사용해 Drag 상태를 관리합니다.
+/// 왼쪽 시간표와 오른쪽 일정 목록 모두 공통 ScheduleDragController를 사용해 클릭과 Drag 입력을 구분합니다.
 /// </summary>
 public partial class DailyView : UserControl
 {
-    // 월간과 주간에서도 사용하는 공통 일정 Drag Controller입니다.
     private readonly ScheduleDragController _dragController;
+    private DailyDragSource _dragSource = DailyDragSource.None;
 
     public DailyView()
     {
         InitializeComponent();
 
-        _dragController = new ScheduleDragController(
-            DragSurface,
-            DragPreview,
-            ClearDropTarget);
-
-        // Drop 대상 강조 한 칸의 높이는
-        // 실제 일간 타임라인의 한 시간 높이와 정확히 일치시킵니다.
-        DropTargetHighlight.Height =
-            DailyTimelineMetrics.HourHeight;
+        _dragController = new ScheduleDragController(DragSurface, DragPreview, ClearDropTarget);
+        DropTargetHighlight.Height = DailyTimelineMetrics.HourHeight;
 
         Unloaded += DailyView_Unloaded;
     }
 
     /// <summary>
-    /// 왼쪽 시간표의 일정 카드를 눌렀을 때
-    /// 클릭 또는 Drag 후보 상태를 준비합니다.
+    /// 왼쪽 시간표의 일정 카드를 눌렀을 때 클릭 또는 시간 이동 Drag 후보를 준비합니다.
     /// </summary>
     private void ScheduleButton_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (sender is not FrameworkElement element ||
-            element.DataContext is not DailyScheduleViewModel scheduleViewModel)
+        if (sender is not FrameworkElement element || element.DataContext is not DailyScheduleViewModel scheduleViewModel)
         {
             return;
         }
@@ -51,79 +42,109 @@ public partial class DailyView : UserControl
             return;
         }
 
-        if (!_dragController.TryPrepareCandidate(
-                element,
-                scheduleViewModel.Schedule,
-                viewModel.SelectedDate,
-                scheduleViewModel.DisplayText,
-                e))
+        if (!_dragController.TryPrepareCandidate(element, scheduleViewModel.Schedule, viewModel.SelectedDate, scheduleViewModel.DisplayText, e))
         {
             return;
         }
 
+        _dragSource = DailyDragSource.Timeline;
         e.Handled = true;
     }
 
     /// <summary>
-    /// 마우스 이동을 공통 Drag Controller에 전달합니다.
-    /// 실제 Drag가 시작되면 현재 마우스 위치의 시간대를 계산하여 강조합니다.
+    /// 오른쪽 할 일 또는 완료한 일 카드를 눌렀을 때 클릭 또는 완료 상태 변경 Drag 후보를 준비합니다.
+    /// </summary>
+    private void ScheduleListButton_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not FrameworkElement element || element.DataContext is not DailyScheduleViewModel scheduleViewModel)
+        {
+            return;
+        }
+
+        if (DataContext is not DailyViewModel viewModel)
+        {
+            return;
+        }
+
+        if (!_dragController.TryPrepareCandidate(element, scheduleViewModel.Schedule, viewModel.SelectedDate, scheduleViewModel.DisplayText, e))
+        {
+            return;
+        }
+
+        _dragSource = scheduleViewModel.IsCompleted ? DailyDragSource.CompletedList : DailyDragSource.IncompleteList;
+        e.Handled = true;
+    }
+
+    /// <summary>
+    /// Drag가 시작된 영역에 따라 시간표 또는 일정 목록의 Drop 대상을 갱신합니다.
     /// </summary>
     private void DragSurface_PreviewMouseMove(object sender, MouseEventArgs e)
     {
-        if (_dragController.HandleMouseMove(
-                e,
-                DailyTimelineArea,
-                UpdateDropTarget))
+        var handled = _dragSource switch
+        {
+            DailyDragSource.Timeline => _dragController.HandleMouseMove(e, DailyTimelineArea, UpdateTimelineDropTarget),
+            DailyDragSource.IncompleteList or DailyDragSource.CompletedList => _dragController.HandleMouseMove(e, DragSurface, UpdateScheduleListDropTarget),
+            _ => false
+        };
+
+        if (handled)
         {
             e.Handled = true;
         }
     }
 
     /// <summary>
-    /// 현재 마우스가 위치한 시간대를
-    /// 1시간 단위 Drop 대상으로 강조합니다.
+    /// 현재 마우스가 위치한 시간대를 1시간 단위 Drop 대상으로 강조합니다.
     /// </summary>
-    private void UpdateDropTarget(Point timelinePosition)
+    private void UpdateTimelineDropTarget(Point timelinePosition)
     {
-        var targetHour =
-            GetTargetHour(timelinePosition);
+        ClearScheduleListDropTarget();
+
+        var targetHour = GetTargetHour(timelinePosition);
 
         if (!targetHour.HasValue)
         {
-            ClearDropTarget();
+            DropTargetHighlight.Visibility = Visibility.Collapsed;
             return;
         }
 
-        var targetTop =
-            targetHour.Value *
-            DailyTimelineMetrics.HourHeight;
+        var targetTop = targetHour.Value * DailyTimelineMetrics.HourHeight;
 
-        DropTargetHighlight.Margin =
-            new Thickness(
-                DailyTimelineMetrics.TimeLabelWidth,
-                targetTop,
-                8,
-                0);
-
-        DropTargetHighlight.Visibility =
-            Visibility.Visible;
+        DropTargetHighlight.Margin = new Thickness(DailyTimelineMetrics.TimeLabelWidth, targetTop, 8, 0);
+        DropTargetHighlight.Visibility = Visibility.Visible;
     }
 
     /// <summary>
-    /// 일간 타임라인의 마우스 위치를
-    /// 0시부터 23시까지의 정각 시간으로 변환합니다.
-    /// 시간 표시 영역 밖이나 타임라인 밖이면 null을 반환합니다.
+    /// 오른쪽 일정 목록 Drag 중 반대쪽 완료 상태 영역을 Drop 대상으로 강조합니다.
+    /// </summary>
+    private void UpdateScheduleListDropTarget(Point dragSurfacePosition)
+    {
+        DropTargetHighlight.Visibility = Visibility.Collapsed;
+        ClearScheduleListDropTarget();
+
+        var target = GetScheduleListDropTarget(dragSurfacePosition);
+
+        if (target == DailyDragSource.IncompleteList)
+        {
+            IncompleteScheduleArea.Background = Brushes.AliceBlue;
+        }
+        else if (target == DailyDragSource.CompletedList)
+        {
+            CompletedScheduleArea.Background = Brushes.AliceBlue;
+        }
+    }
+
+    /// <summary>
+    /// 일간 타임라인의 마우스 위치를 0시부터 23시까지의 정각 시간으로 변환합니다.
     /// </summary>
     private int? GetTargetHour(Point timelinePosition)
     {
-        if (DailyTimelineArea.ActualWidth <= 0 ||
-            DailyTimelineArea.ActualHeight <= 0)
+        if (DailyTimelineArea.ActualWidth <= 0 || DailyTimelineArea.ActualHeight <= 0)
         {
             return null;
         }
 
-        var scheduleAreaRight =
-            DailyTimelineArea.ActualWidth - 8;
+        var scheduleAreaRight = DailyTimelineArea.ActualWidth - 8;
 
         if (timelinePosition.X < DailyTimelineMetrics.TimeLabelWidth ||
             timelinePosition.X >= scheduleAreaRight ||
@@ -133,13 +154,9 @@ public partial class DailyView : UserControl
             return null;
         }
 
-        var targetHour =
-            (int)Math.Floor(
-                timelinePosition.Y /
-                DailyTimelineMetrics.HourHeight);
+        var targetHour = (int)Math.Floor(timelinePosition.Y / DailyTimelineMetrics.HourHeight);
 
-        if (targetHour < 0 ||
-            targetHour > 23)
+        if (targetHour < 0 || targetHour > 23)
         {
             return null;
         }
@@ -148,9 +165,43 @@ public partial class DailyView : UserControl
     }
 
     /// <summary>
-    /// MouseUp 시 단순 클릭인지 실제 Drag였는지 확인합니다.
-    /// 클릭이면 기존 일정 수정 화면을 열고,
-    /// Drag이면 선택 날짜의 대상 정각으로 일정을 이동합니다.
+    /// 오른쪽 일정 목록 Drag의 현재 위치가 유효한 반대쪽 목록 영역에 있는지 확인합니다.
+    /// </summary>
+    private DailyDragSource GetScheduleListDropTarget(Point dragSurfacePosition)
+    {
+        if (_dragSource == DailyDragSource.IncompleteList && IsPointInside(CompletedScheduleArea, dragSurfacePosition))
+        {
+            return DailyDragSource.CompletedList;
+        }
+
+        if (_dragSource == DailyDragSource.CompletedList && IsPointInside(IncompleteScheduleArea, dragSurfacePosition))
+        {
+            return DailyDragSource.IncompleteList;
+        }
+
+        return DailyDragSource.None;
+    }
+
+    /// <summary>
+    /// DragSurface 좌표의 한 점이 지정한 화면 요소 내부에 있는지 확인합니다.
+    /// </summary>
+    private bool IsPointInside(FrameworkElement element, Point dragSurfacePosition)
+    {
+        if (element.ActualWidth <= 0 || element.ActualHeight <= 0)
+        {
+            return false;
+        }
+
+        var topLeft = element.TranslatePoint(new Point(0, 0), DragSurface);
+
+        return dragSurfacePosition.X >= topLeft.X &&
+               dragSurfacePosition.X < topLeft.X + element.ActualWidth &&
+               dragSurfacePosition.Y >= topLeft.Y &&
+               dragSurfacePosition.Y < topLeft.Y + element.ActualHeight;
+    }
+
+    /// <summary>
+    /// MouseUp 시 단순 클릭인지 실제 Drag였는지 확인하고 Drag가 시작된 영역에 맞는 동작을 수행합니다.
     /// </summary>
     private void DragSurface_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
     {
@@ -159,49 +210,62 @@ public partial class DailyView : UserControl
             return;
         }
 
-        // Controller가 Drag 상태를 정리하면 Drop 강조도 제거되므로
-        // 먼저 현재 마우스 위치의 대상 시간을 계산합니다.
-        var targetHour = _dragController.IsDragging
-            ? GetTargetHour(
-                e.GetPosition(DailyTimelineArea))
-            : null;
+        var dragSource = _dragSource;
+        int? targetHour = null;
+        var targetList = DailyDragSource.None;
 
-        if (!_dragController.TryCompleteRelease(
-                out var result))
+        if (_dragController.IsDragging)
         {
+            if (dragSource == DailyDragSource.Timeline)
+            {
+                targetHour = GetTargetHour(e.GetPosition(DailyTimelineArea));
+            }
+            else if (dragSource is DailyDragSource.IncompleteList or DailyDragSource.CompletedList)
+            {
+                targetList = GetScheduleListDropTarget(e.GetPosition(DragSurface));
+            }
+        }
+
+        if (!_dragController.TryCompleteRelease(out var result))
+        {
+            _dragSource = DailyDragSource.None;
             return;
         }
 
-        // Drag 거리 기준을 넘지 않았다면
-        // 기존과 동일하게 일정 수정 화면을 엽니다.
+        _dragSource = DailyDragSource.None;
+
         if (!result.WasDragging)
         {
-            if (DataContext is DailyViewModel viewModel &&
-                viewModel.SelectScheduleCommand.CanExecute(
-                    result.Schedule))
+            if (DataContext is DailyViewModel viewModel && viewModel.SelectScheduleCommand.CanExecute(result.Schedule))
             {
-                viewModel.SelectScheduleCommand.Execute(
-                    result.Schedule);
-
-                e.Handled = true;
+                viewModel.SelectScheduleCommand.Execute(result.Schedule);
             }
 
+            e.Handled = true;
             return;
         }
 
-        // 실제 Drag였지만 타임라인의 유효한 시간 영역 밖에 놓았다면
-        // 아무 일정 변경 없이 Drag만 종료합니다.
-        if (!targetHour.HasValue)
+        if (dragSource == DailyDragSource.Timeline)
         {
+            if (targetHour.HasValue && DataContext is DailyViewModel viewModel)
+            {
+                viewModel.MoveScheduleByDrop(result.Schedule, targetHour.Value);
+            }
+
             e.Handled = true;
             return;
         }
 
         if (DataContext is DailyViewModel currentViewModel)
         {
-            currentViewModel.MoveScheduleByDrop(
-                result.Schedule,
-                targetHour.Value);
+            if (dragSource == DailyDragSource.IncompleteList && targetList == DailyDragSource.CompletedList)
+            {
+                currentViewModel.MarkScheduleAsCompletedByDrop(result.Schedule);
+            }
+            else if (dragSource == DailyDragSource.CompletedList && targetList == DailyDragSource.IncompleteList)
+            {
+                currentViewModel.MarkScheduleAsIncompleteByDrop(result.Schedule);
+            }
         }
 
         e.Handled = true;
@@ -212,27 +276,26 @@ public partial class DailyView : UserControl
     /// </summary>
     private void DragSurface_PreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (!_dragController.IsDragging ||
-            e.Key != Key.Escape)
+        if (!_dragController.IsDragging || e.Key != Key.Escape)
         {
             return;
         }
 
         _dragController.Cancel();
+        _dragSource = DailyDragSource.None;
 
         e.Handled = true;
     }
 
     /// <summary>
-    /// 예기치 않게 Mouse Capture가 해제되면
-    /// Drag 상태를 안전하게 정리합니다.
+    /// 예기치 않게 Mouse Capture가 해제되면 Drag 상태를 안전하게 정리합니다.
     /// </summary>
     private void DragSurface_LostMouseCapture(object sender, MouseEventArgs e)
     {
-        if (_dragController.IsDragging &&
-            Mouse.Captured != DragSurface)
+        if (_dragController.IsDragging && Mouse.Captured != DragSurface)
         {
             _dragController.Cancel();
+            _dragSource = DailyDragSource.None;
         }
     }
 
@@ -242,14 +305,32 @@ public partial class DailyView : UserControl
     private void DailyView_Unloaded(object sender, RoutedEventArgs e)
     {
         _dragController.Cleanup();
+        _dragSource = DailyDragSource.None;
     }
 
     /// <summary>
-    /// 현재 표시 중인 시간 Drop 대상 강조를 제거합니다.
+    /// 시간표와 오른쪽 일정 목록의 모든 Drop 강조를 제거합니다.
     /// </summary>
     private void ClearDropTarget()
     {
-        DropTargetHighlight.Visibility =
-            Visibility.Collapsed;
+        DropTargetHighlight.Visibility = Visibility.Collapsed;
+        ClearScheduleListDropTarget();
+    }
+
+    /// <summary>
+    /// 할 일과 완료한 일 영역의 Drop 강조를 제거합니다.
+    /// </summary>
+    private void ClearScheduleListDropTarget()
+    {
+        IncompleteScheduleArea.Background = Brushes.Transparent;
+        CompletedScheduleArea.Background = Brushes.Transparent;
+    }
+
+    private enum DailyDragSource
+    {
+        None,
+        Timeline,
+        IncompleteList,
+        CompletedList
     }
 }
