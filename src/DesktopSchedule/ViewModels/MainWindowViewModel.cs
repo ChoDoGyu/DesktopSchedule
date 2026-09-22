@@ -42,12 +42,42 @@ public class MainWindowViewModel : ViewModelBase
     public bool ShowInTaskbar => _appSettingsService.ShowInTaskbar;
 
     /// <summary>
+    /// 현재 월간 화면이 표시되고 있는지 여부입니다.
+    /// 상단 내비게이션의 선택 상태를 표현하는 데 사용합니다.
+    /// </summary>
+    public bool IsMonthlyViewActive => CurrentViewModel is MonthlyCalendarViewModel;
+
+    /// <summary>
+    /// 현재 주간 화면이 표시되고 있는지 여부입니다.
+    /// </summary>
+    public bool IsWeeklyViewActive => CurrentViewModel is WeeklyScheduleViewModel;
+
+    /// <summary>
+    /// 현재 일간 화면이 표시되고 있는지 여부입니다.
+    /// </summary>
+    public bool IsDailyViewActive => CurrentViewModel is DailyViewModel;
+
+    /// <summary>
+    /// 현재 설정 화면이 표시되고 있는지 여부입니다.
+    /// </summary>
+    public bool IsSettingsViewActive => CurrentViewModel is SettingsViewModel;
+
+    /// <summary>
     /// 현재 MainWindow에 표시할 화면의 ViewModel입니다.
+    /// 화면이 바뀌면 상단 내비게이션의 활성 상태도 함께 갱신합니다.
     /// </summary>
     public ViewModelBase CurrentViewModel
     {
         get => _currentViewModel;
-        set => SetProperty(ref _currentViewModel, value);
+        set
+        {
+            if (!SetProperty(ref _currentViewModel, value))
+            {
+                return;
+            }
+
+            NotifyActiveViewProperties();
+        }
     }
 
     public RelayCommand ShowMonthlyCalendarCommand { get; }
@@ -78,6 +108,17 @@ public class MainWindowViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(IsTopmost));
         OnPropertyChanged(nameof(ShowInTaskbar));
+    }
+
+    /// <summary>
+    /// 현재 화면 종류에 따라 달라지는 내비게이션 활성 상태 속성을 모두 갱신합니다.
+    /// </summary>
+    private void NotifyActiveViewProperties()
+    {
+        OnPropertyChanged(nameof(IsMonthlyViewActive));
+        OnPropertyChanged(nameof(IsWeeklyViewActive));
+        OnPropertyChanged(nameof(IsDailyViewActive));
+        OnPropertyChanged(nameof(IsSettingsViewActive));
     }
 
     /// <summary>

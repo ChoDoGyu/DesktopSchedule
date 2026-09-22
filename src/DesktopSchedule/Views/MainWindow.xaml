@@ -15,7 +15,9 @@
         ResizeMode="CanResize"
         WindowStartupLocation="CenterScreen"
         Topmost="{Binding IsTopmost, Mode=OneWay}"
-        ShowInTaskbar="{Binding ShowInTaskbar, Mode=OneWay}">
+        ShowInTaskbar="{Binding ShowInTaskbar, Mode=OneWay}"
+        Background="{StaticResource AppBackgroundBrush}"
+        FontFamily="{StaticResource AppFontFamily}">
 
     <Window.Resources>
         <DataTemplate DataType="{x:Type vm:MonthlyCalendarViewModel}">
@@ -33,52 +35,73 @@
         <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
             <views:SettingsView />
         </DataTemplate>
+
+        <Style x:Key="MainNavigationButtonStyle"
+               TargetType="Button"
+               BasedOn="{StaticResource AppSecondaryButtonStyle}">
+            <Setter Property="MinWidth" Value="80" />
+            <Setter Property="MinHeight" Value="36" />
+            <Setter Property="Padding" Value="14,7" />
+            <Setter Property="Margin" Value="6,0,0,0" />
+
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="True">
+                    <Setter Property="Background" Value="{StaticResource PrimaryLightBrush}" />
+                    <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
+                    <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+                    <Setter Property="FontWeight" Value="SemiBold" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </Window.Resources>
 
-    <Grid Margin="16">
+    <Grid Margin="20">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0"
-                   Text="{Binding Title}"
-                   FontSize="24"
-                   FontWeight="SemiBold"
-                   Margin="0,0,0,16" />
+        <Grid Grid.Row="0" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
 
-        <UniformGrid Grid.Row="1"
-                     Rows="1"
-                     Columns="4"
-                     Margin="0,0,0,16">
+            <TextBlock Grid.Column="0"
+                       Text="{Binding Title}"
+                       Style="{StaticResource AppPageTitleTextStyle}"
+                       VerticalAlignment="Center" />
 
-            <Button Content="월간"
-                    Command="{Binding ShowMonthlyCalendarCommand}"
-                    Margin="0,0,4,0"
-                    Padding="6" />
+            <StackPanel Grid.Column="2"
+                        Orientation="Horizontal"
+                        VerticalAlignment="Center">
 
-            <Button Content="주간"
-                    Command="{Binding ShowWeeklyScheduleCommand}"
-                    Margin="4,0"
-                    Padding="6" />
+                <Button Content="월간"
+                        Command="{Binding ShowMonthlyCalendarCommand}"
+                        Tag="{Binding IsMonthlyViewActive}"
+                        Style="{StaticResource MainNavigationButtonStyle}"
+                        Margin="0" />
 
-            <Button Content="일간"
-                    Command="{Binding ShowDailyCommand}"
-                    Margin="4,0"
-                    Padding="6" />
+                <Button Content="주간"
+                        Command="{Binding ShowWeeklyScheduleCommand}"
+                        Tag="{Binding IsWeeklyViewActive}"
+                        Style="{StaticResource MainNavigationButtonStyle}" />
 
-            <Button Content="설정"
-                    Command="{Binding ShowSettingsCommand}"
-                    Margin="4,0,0,0"
-                    Padding="6" />
-        </UniformGrid>
+                <Button Content="일간"
+                        Command="{Binding ShowDailyCommand}"
+                        Tag="{Binding IsDailyViewActive}"
+                        Style="{StaticResource MainNavigationButtonStyle}" />
 
-        <Border Grid.Row="2"
-                BorderBrush="LightGray"
-                BorderThickness="1"
-                CornerRadius="8"
-                Padding="12">
+                <Button Content="설정"
+                        Command="{Binding ShowSettingsCommand}"
+                        Tag="{Binding IsSettingsViewActive}"
+                        Style="{StaticResource MainNavigationButtonStyle}" />
+            </StackPanel>
+        </Grid>
+
+        <Border Grid.Row="1"
+                Style="{StaticResource AppPanelBorderStyle}">
 
             <ContentControl Content="{Binding CurrentViewModel}" />
         </Border>
