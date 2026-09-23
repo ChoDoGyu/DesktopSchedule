@@ -179,7 +179,8 @@ public class DailyViewModel : ScheduleEditorViewModelBase
     }
 
     /// <summary>
-    /// 선택 날짜에 포함되는 전체 일정을 불러와 시간 타임라인, 미완료 목록, 완료 목록으로 각각 구성합니다.
+    /// 선택 날짜와 겹칠 가능성이 있는 일정만 불러온 뒤
+    /// 기존 날짜 판정 규칙을 적용하여 타임라인, 미완료 목록, 완료 목록으로 구성합니다.
     /// </summary>
     private void LoadSchedules()
     {
@@ -187,8 +188,11 @@ public class DailyViewModel : ScheduleEditorViewModelBase
         IncompleteSchedules.Clear();
         CompletedSchedules.Clear();
 
+        var rangeStart = SelectedDate.Date;
+        var rangeEndExclusive = rangeStart.AddDays(1);
+
         var schedules = ScheduleService
-            .GetAll(true)
+            .GetByDateRange(rangeStart, rangeEndExclusive, true)
             .Where(schedule => ScheduleCalendarCalculator.IsScheduleOnDate(schedule, SelectedDate))
             .OrderBy(schedule => schedule.IsAllDay ? 0 : 1)
             .ThenBy(schedule => schedule.StartAt)

@@ -72,6 +72,18 @@ public class DatabaseService
         AddColumnIfMissing(connection, "Schedules", "IsReminderEnabled", "INTEGER NOT NULL DEFAULT 0");
         AddColumnIfMissing(connection, "Schedules", "ReminderMinutesBefore", "INTEGER NOT NULL DEFAULT 0");
 
+        // 오래된 일정이 많이 누적되어도 화면 조회 시 현재 표시 기간과 겹칠 가능성이 있는 일정부터 빠르게 찾습니다.
+        // EndAt을 앞에 두어 장기간 누적된 과거 일정들을 먼저 제외할 수 있도록 합니다.
+        using var dateRangeIndexCommand = connection.CreateCommand();
+
+        dateRangeIndexCommand.CommandText =
+            """
+            CREATE INDEX IF NOT EXISTS IX_Schedules_DateRange
+            ON Schedules (EndAt, StartAt, IsCompleted);
+            """;
+
+        dateRangeIndexCommand.ExecuteNonQuery();
+
         // 알림 검사 시 알림 활성 여부, 완료 여부, 하루 종일 여부와 시작 시각을 기준으로
         // 후보 일정을 빠르게 좁힐 수 있도록 조회용 인덱스를 준비합니다.
         using var reminderIndexCommand = connection.CreateCommand();

@@ -126,13 +126,16 @@ public class WeeklyScheduleViewModel : ScheduleEditorViewModelBase
 
     /// <summary>
     /// 현재 주의 날짜 정보와 전체 일정 Row 레이아웃을 다시 구성합니다.
+    /// 현재 표시하는 7일과 겹치는 일정만 데이터베이스에서 조회합니다.
     /// </summary>
     private void LoadWeek()
     {
         Days.Clear();
         SpanningSchedules.Clear();
 
-        var schedules = ScheduleService.GetAll(ShowCompletedSchedules);
+        var rangeStart = WeekStartDate.Date;
+        var rangeEndExclusive = rangeStart.AddDays(7);
+        var schedules = ScheduleService.GetByDateRange(rangeStart, rangeEndExclusive, ShowCompletedSchedules);
 
         LoadScheduleLayout(schedules);
         LoadDays();

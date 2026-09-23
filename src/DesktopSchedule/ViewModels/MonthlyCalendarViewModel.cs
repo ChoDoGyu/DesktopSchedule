@@ -131,14 +131,21 @@ public class MonthlyCalendarViewModel : ScheduleEditorViewModelBase
     }
 
     /// <summary>
-    /// 저장된 일정을 다시 불러오고
-    /// 현재 월간 달력 범위에 맞게 모든 일정을 공통 Row 구조로 다시 배치합니다.
+    /// 현재 월간 달력에 실제로 표시되는 42일 범위와 겹치는 일정만 불러와
+    /// 공통 Row 구조로 다시 배치합니다.
     /// </summary>
     public void LoadSchedules()
     {
         ClearMonthlyScheduleLayout();
 
-        var schedules = ScheduleService.GetAll(ShowCompletedSchedules);
+        if (Weeks.Count == 0)
+        {
+            return;
+        }
+
+        var rangeStart = Weeks[0].WeekStartDate.Date;
+        var rangeEndExclusive = rangeStart.AddDays(42);
+        var schedules = ScheduleService.GetByDateRange(rangeStart, rangeEndExclusive, ShowCompletedSchedules);
 
         LoadScheduleLayouts(schedules);
     }
@@ -249,7 +256,6 @@ public class MonthlyCalendarViewModel : ScheduleEditorViewModelBase
         SelectedDate = DisplayMonth;
 
         CloseEditor();
-
         LoadMonth();
         LoadSchedules();
     }
@@ -263,7 +269,6 @@ public class MonthlyCalendarViewModel : ScheduleEditorViewModelBase
         SelectedDate = DateTime.Today;
 
         CloseEditor();
-
         LoadMonth();
         LoadSchedules();
     }

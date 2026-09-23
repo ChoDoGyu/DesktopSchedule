@@ -64,6 +64,79 @@ public class SqliteScheduleRepository : IScheduleRepository
     }
 
     /// <summary>
+    /// 지정한 기간과 겹칠 가능성이 있는 일정만 반환합니다.
+    /// 하루 종일 일정은 종료 날짜를 포함하므로 EndAt이 조회 시작 시각과 같은 경우도 후보에 포함합니다.
+    /// 화면별 계산기가 최종 표시 여부를 다시 판정합니다.
+    /// </summary>
+    public IReadOnlyList<ScheduleItem> GetByDateRange(DateTime rangeStart, DateTime rangeEndExclusive, bool includeCompleted)
+    {
+        if (rangeEndExclusive <= rangeStart)
+        {
+            throw new ArgumentException("조회 종료 시각은 시작 시각보다 늦어야 합니다.", nameof(rangeEndExclusive));
+        }
+
+        var schedules = new List<ScheduleItem>();
+
+        using var connection = new SqliteConnection(_connectionString);
+        connection.Open();
+
+        using var command = connection.CreateCommand();
+
+        command.CommandText = includeCompleted
+            ? """
+              SELECT
+                  Id,
+                  Title,
+                  Description,
+                  StartAt,
+                  EndAt,
+                  IsAllDay,
+                  IsCompleted,
+                  CompletedAt,
+                  IsReminderEnabled,
+                  ReminderMinutesBefore,
+                  CreatedAt,
+                  UpdatedAt
+              FROM Schedules
+              WHERE StartAt < $rangeEndExclusive
+                  AND EndAt >= $rangeStart
+              ORDER BY StartAt, EndAt, Title;
+              """
+            : """
+              SELECT
+                  Id,
+                  Title,
+                  Description,
+                  StartAt,
+                  EndAt,
+                  IsAllDay,
+                  IsCompleted,
+                  CompletedAt,
+                  IsReminderEnabled,
+                  ReminderMinutesBefore,
+                  CreatedAt,
+                  UpdatedAt
+              FROM Schedules
+              WHERE StartAt < $rangeEndExclusive
+                  AND EndAt >= $rangeStart
+                  AND IsCompleted = 0
+              ORDER BY StartAt, EndAt, Title;
+              """;
+
+        command.Parameters.AddWithValue("$rangeStart", rangeStart.ToString("O", CultureInfo.InvariantCulture));
+        command.Parameters.AddWithValue("$rangeEndExclusive", rangeEndExclusive.ToString("O", CultureInfo.InvariantCulture));
+
+        using var reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            schedules.Add(ReadSchedule(reader));
+        }
+
+        return schedules;
+    }
+
+    /// <summary>
     /// 지정한 알림 검사 구간에서 실제 알림 대상이 될 가능성이 있는 일정만 반환합니다.
     /// 완료 일정과 알림 비활성 일정은 제외하며 실제 알림 시각 계산은 기존 규칙과 동일하게 적용합니다.
     /// </summary>

@@ -34,6 +34,20 @@ public class ScheduleService
     }
 
     /// <summary>
+    /// 지정한 기간과 겹치는 일정만 반환합니다.
+    /// rangeEndExclusive는 조회 범위에 포함되지 않는 다음 시각입니다.
+    /// </summary>
+    public IReadOnlyList<ScheduleItem> GetByDateRange(DateTime rangeStart, DateTime rangeEndExclusive, bool includeCompleted = false)
+    {
+        if (rangeEndExclusive <= rangeStart)
+        {
+            throw new ArgumentException("조회 종료 시각은 시작 시각보다 늦어야 합니다.", nameof(rangeEndExclusive));
+        }
+
+        return _scheduleRepository.GetByDateRange(rangeStart, rangeEndExclusive, includeCompleted);
+    }
+
+    /// <summary>
     /// 지정한 알림 검사 구간에서 실제 알림 대상이 될 가능성이 있는 일정만 반환합니다.
     /// </summary>
     public IReadOnlyList<ScheduleItem> GetReminderCandidates(DateTime reminderWindowStart, DateTime reminderWindowEnd)
@@ -88,7 +102,6 @@ public class ScheduleService
         };
 
         _scheduleRepository.Add(schedule);
-
         return schedule;
     }
 

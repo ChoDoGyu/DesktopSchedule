@@ -13,6 +13,11 @@ public interface IScheduleRepository
     IReadOnlyList<ScheduleItem> GetAll();
 
     /// <summary>
+    /// 지정한 기간과 겹치는 일정을 반환합니다.
+    /// </summary>
+    IReadOnlyList<ScheduleItem> GetByDateRange(DateTime rangeStart, DateTime rangeEndExclusive, bool includeCompleted);
+
+    /// <summary>
     /// 지정한 알림 검사 구간에서 실제 알림 대상이 될 가능성이 있는 일정을 반환합니다.
     /// </summary>
     IReadOnlyList<ScheduleItem> GetReminderCandidates(DateTime reminderWindowStart, DateTime reminderWindowEnd);
