@@ -67,39 +67,28 @@ public class DatabaseService
 
         // 이전 버전에서 생성한 DB에는 새 컬럼이 없을 수 있으므로
         // 존재하지 않는 컬럼만 추가하여 기존 데이터를 유지합니다.
-        AddColumnIfMissing(
-            connection,
-            "Schedules",
-            "IsCompleted",
-            "INTEGER NOT NULL DEFAULT 0");
+        AddColumnIfMissing(connection, "Schedules", "IsCompleted", "INTEGER NOT NULL DEFAULT 0");
+        AddColumnIfMissing(connection, "Schedules", "CompletedAt", "TEXT NULL");
+        AddColumnIfMissing(connection, "Schedules", "IsReminderEnabled", "INTEGER NOT NULL DEFAULT 0");
+        AddColumnIfMissing(connection, "Schedules", "ReminderMinutesBefore", "INTEGER NOT NULL DEFAULT 0");
 
-        AddColumnIfMissing(
-            connection,
-            "Schedules",
-            "CompletedAt",
-            "TEXT NULL");
+        // 알림 검사 시 알림 활성 여부, 완료 여부, 하루 종일 여부와 시작 시각을 기준으로
+        // 후보 일정을 빠르게 좁힐 수 있도록 조회용 인덱스를 준비합니다.
+        using var reminderIndexCommand = connection.CreateCommand();
 
-        AddColumnIfMissing(
-            connection,
-            "Schedules",
-            "IsReminderEnabled",
-            "INTEGER NOT NULL DEFAULT 0");
+        reminderIndexCommand.CommandText =
+            """
+            CREATE INDEX IF NOT EXISTS IX_Schedules_ReminderLookup
+            ON Schedules (IsReminderEnabled, IsCompleted, IsAllDay, StartAt);
+            """;
 
-        AddColumnIfMissing(
-            connection,
-            "Schedules",
-            "ReminderMinutesBefore",
-            "INTEGER NOT NULL DEFAULT 0");
+        reminderIndexCommand.ExecuteNonQuery();
     }
 
     /// <summary>
     /// 지정한 컬럼이 존재하지 않는 경우 기존 테이블에 새 컬럼을 추가합니다.
     /// </summary>
-    private static void AddColumnIfMissing(
-        SqliteConnection connection,
-        string tableName,
-        string columnName,
-        string columnDefinition)
+    private static void AddColumnIfMissing(SqliteConnection connection, string tableName, string columnName, string columnDefinition)
     {
         if (ColumnExists(connection, tableName, columnName))
         {
@@ -110,19 +99,14 @@ public class DatabaseService
 
         // tableName, columnName, columnDefinition은 애플리케이션 내부에서
         // 고정된 값만 전달하며 사용자 입력값을 사용하지 않습니다.
-        command.CommandText =
-            $"ALTER TABLE {tableName} ADD COLUMN {columnName} {columnDefinition};";
-
+        command.CommandText = $"ALTER TABLE {tableName} ADD COLUMN {columnName} {columnDefinition};";
         command.ExecuteNonQuery();
     }
 
     /// <summary>
     /// 지정한 테이블에 특정 컬럼이 존재하는지 확인합니다.
     /// </summary>
-    private static bool ColumnExists(
-        SqliteConnection connection,
-        string tableName,
-        string columnName)
+    private static bool ColumnExists(SqliteConnection connection, string tableName, string columnName)
     {
         using var command = connection.CreateCommand();
 
@@ -136,10 +120,7 @@ public class DatabaseService
             // PRAGMA table_info 결과의 두 번째 값은 컬럼 이름입니다.
             var existingColumnName = reader.GetString(1);
 
-            if (string.Equals(
-                existingColumnName,
-                columnName,
-                StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(existingColumnName, columnName, StringComparison.OrdinalIgnoreCase))
             {
                 return true;
             }

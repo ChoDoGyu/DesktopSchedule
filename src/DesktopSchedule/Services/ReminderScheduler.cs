@@ -80,7 +80,25 @@ public sealed class ReminderScheduler
     private void Timer_Tick(object? sender, EventArgs e)
     {
         var now = DateTime.Now;
-        var schedules = _scheduleService.GetAll();
+
+        // 이전 검사 시각이 오래된 경우에도 최대 지연 허용 시간보다 오래된 알림은
+        // 어차피 표시하지 않으므로 DB 조회 범위 역시 최근 1분으로 제한합니다.
+        var reminderWindowStart = _lastCheckedAt;
+        var maximumDelayStart = now - MaximumReminderDelay;
+
+        if (reminderWindowStart < maximumDelayStart)
+        {
+            reminderWindowStart = maximumDelayStart;
+        }
+
+        IReadOnlyList<ScheduleItem> schedules = Array.Empty<ScheduleItem>();
+
+        // 시스템 시간이 뒤로 변경된 경우 잘못된 역방향 조회를 하지 않고
+        // 이번 Tick에서는 알림 조회를 건너뛴 뒤 마지막 검사 시각을 현재 시각으로 다시 맞춥니다.
+        if (reminderWindowStart <= now)
+        {
+            schedules = _scheduleService.GetReminderCandidates(reminderWindowStart, now);
+        }
 
         foreach (var schedule in schedules)
         {
@@ -96,7 +114,6 @@ public sealed class ReminderScheduler
         }
 
         CleanupNotificationHistory(now);
-
         _lastCheckedAt = now;
     }
 
@@ -140,9 +157,7 @@ public sealed class ReminderScheduler
     private void CleanupNotificationHistory(DateTime now)
     {
         var retentionThreshold = now - NotificationHistoryRetention;
-
-        _notifiedReminders.RemoveWhere(
-            occurrence => occurrence.ReminderAt < retentionThreshold);
+        _notifiedReminders.RemoveWhere(occurrence => occurrence.ReminderAt < retentionThreshold);
     }
 
     /// <summary>
